@@ -1,0 +1,14 @@
+{
+  "declarations": [
+    {"type":"TileDef","name":"Plain","glyph":".","nameStr":"Plain","cost":1},
+    {"type":"TileDef","name":"Mountain","glyph":"^","nameStr":"Mountain","cost":3},
+    {"type":"TileDef","name":"Water","glyph":"~","nameStr":"Water","cost":99},
+    {"type":"MapDef","name":"world","width":8,"height":5,"rows":[
+      {"index":0,"pattern":"^^^^^^^^"},
+      {"index":1,"pattern":"^......^"},
+      {"index":2,"pattern":"^..~~..^"},
+      {"index":3,"pattern":"^......^"},
+      {"index":4,"pattern":"^^^^^^^^"}
+    ]}
+  ]
+}
