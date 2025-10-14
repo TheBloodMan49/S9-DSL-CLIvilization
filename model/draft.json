@@ -15,11 +15,7 @@
       "buildings": [
         {
           "id_building": "string",
-          "level": "integer",
-          "position": {
-            "x": "integer",
-            "y": "integer"
-          }
+          "level": "integer"
         }
       ],
       "nb_slots_units": "integer",
