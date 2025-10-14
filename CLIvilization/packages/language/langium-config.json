@@ -1,0 +1,16 @@
+{
+    "projectName": "ClIvilization",
+    "languages": [
+        {
+            "id": "cl-ivilization",
+            "grammar": "src/cl-ivilization.langium",
+            "fileExtensions": [
+                "civ"
+            ],
+            "textMate": {
+                "out": "syntaxes/cl-ivilization.tmLanguage.json"
+            }
+        }
+    ],
+    "out": "src/generated"
+}
