@@ -1,70 +1,68 @@
 {
-  "properties": {
-    "size": {
-      "x": "int",
-      "y": "int"
-    },
-    "cities": [
-      {
-        "name": "string",
-        "x": "integer",
-        "y": "integer",
-        "starting_resources": "integer",
-        "type": "string (Player/IA)",
-        "civilization": "string (name of the civilization)",
-        "nb_slots_buildings": "integer",
-        "buildings": [
-          {
-            "id_building": "string",
-            "level": "integer",
-            "position": {
-              "x": "integer",
-              "y": "integer"
-            }
+  "size": {
+    "x": "int",
+    "y": "int"
+  },
+  "cities": [
+    {
+      "name": "string",
+      "x": "integer",
+      "y": "integer",
+      "starting_resources": "integer",
+      "type": "string (Player/IA)",
+      "civilization": "string (name of the civilization)",
+      "nb_slots_buildings": "integer",
+      "buildings": [
+        {
+          "id_building": "string",
+          "level": "integer",
+          "position": {
+            "x": "integer",
+            "y": "integer"
           }
-        ],
-        "nb_slots_units": "integer",
-        "units": [
-          {
-            "id_units": "string"
-          }
-        ]
-      }
-    ],
-    "game": {
-      "current_turn": "integer"
-    },
-    "victory_conditions": {
-      "nb_turns": "integer",
-      "resources_spent": "integer"
-    },
-    "buildings": [
-      {
-        "id_building": "string",
-        "name": "string",
-        "cost": "integer",
-        "build_time": "integer",
-        "slots": "integer",
-        "production": {
-          "type": "string (unit/resource)",
-          "id_units": "string",
-          "amount": "integer",
-          "time": "integer",
-          "cost": "integer"
-        },
-        "prerequisites": [
-          {
-            "id_building": "string"
-          }
-        ]
-      }
-    ],
-    "units": [
-      {
+        }
+      ],
+      "nb_slots_units": "integer",
+      "units": [
+        {
+          "id_units": "string"
+        }
+      ]
+    }
+  ],
+  "game": {
+    "current_turn": "integer"
+  },
+  "victory_conditions": {
+    "nb_turns": "integer",
+    "resources_spent": "integer"
+  },
+  "buildings": [
+    {
+      "id_building": "string",
+      "name": "string",
+      "cost": "integer",
+      "build_time": "integer",
+      "slots": "integer",
+      "production": {
+        "type": "string (unit/resource)",
         "id_units": "string",
-        "name": "string",
-        "attack": "integer"
-      }
-    ]
-  }
+        "amount": "integer",
+        "time": "integer",
+        "cost": "integer"
+      },
+      "prerequisites": [
+        {
+          "id_building": "string"
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id_units": "string",
+      "name": "string",
+      "attack": "integer"
+    }
+  ]
 }
