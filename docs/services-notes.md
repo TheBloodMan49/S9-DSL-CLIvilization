@@ -1,15 +1,16 @@
 # Services-notes
 
-- Legal moves : only allows a coherent configuration 
+- Legal moves: Only allows a coherent configuration which only references defined entities (cities, ...) and uses valid
+values.
 
-- Complexité :
+- Complexity:
 
-- Mode texte :
+- Text mode:
 
-- Graphique/skin :
+- Skin: Color of the civilizations, color of the window.
 
-- Basic AI : plays a random quantity of legal move each turn
+- Basic AI: Configure the maximum amount of played moves per turn, and the choice algorithm (random, ruleset).
 
-- Better AI : no clue for now
+- Better AI: Faster AI. Stronger AI.
 
-- LLM : 
+- LLM: Allow a LLM to understand the rules and play coherently.
