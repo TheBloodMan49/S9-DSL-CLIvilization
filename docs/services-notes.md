@@ -3,9 +3,9 @@
 - Legal moves: Only allows a coherent configuration which only references defined entities (cities, ...) and uses valid
 values.
 
-- Complexity:
+- Complexity: *Wtf*
 
-- Text mode:
+- Text mode: *Wtf: Rebirth*
 
 - Skin: Color of the civilizations, color of the window.
 
