@@ -16,7 +16,7 @@ fn main() {
     // Tell cargo when to rerun
     println!("cargo:rerun-if-changed={}", AST_FILE_PATH);
 
-    // Preparing out dir
+    // Preparing output directory
     let out_dir_str = env::var("OUT_DIR").expect("missing OUT_DIR env var");
     let out_dir = Path::new(&out_dir_str);
 
