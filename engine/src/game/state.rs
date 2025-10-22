@@ -21,7 +21,7 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> Self {
         Self {
-            map: GameMap::new(),
+            map: GameMap::new("roblox".to_string()),
             resources: Resources {
                 gold: 100,
                 science: 0,

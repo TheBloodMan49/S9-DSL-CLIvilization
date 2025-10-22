@@ -1,4 +1,5 @@
 use noise::{NoiseFn, Perlin};
+use crate::game::utils::hash_tmb;
 
 #[derive(Clone)]
 pub enum Terrain {
@@ -25,16 +26,17 @@ pub struct GameMap {
     pub tiles: Vec<Vec<Terrain>>,
     pub width: usize,
     pub height: usize,
+    pub seed: String,
 }
 
 impl GameMap {
-    pub fn new() -> Self {
+    pub fn new(seed: String) -> Self {
         let width = 80;
         let height = 40;
         let mut tiles = vec![vec![Terrain::Water; width]; height];
 
-        let perlin_elevation = Perlin::new(456);
-        let perlin_moisture = Perlin::new(213);
+        let perlin_elevation = Perlin::new(hash_tmb(seed.clone()));
+        let perlin_moisture = Perlin::new(hash_tmb(hash_tmb(seed.clone()).to_string()));
         let scale = 0.1;
 
         for y in 0..height {
@@ -62,6 +64,7 @@ impl GameMap {
             tiles,
             width,
             height,
+            seed
         }
     }
 }

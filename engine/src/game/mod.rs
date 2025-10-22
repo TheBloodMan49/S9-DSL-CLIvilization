@@ -1,6 +1,7 @@
 pub mod map;
 pub mod state;
 pub mod ui;
+mod utils;
 
 use self::state::GameState;
 use self::ui::draw_ui;
