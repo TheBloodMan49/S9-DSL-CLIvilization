@@ -1,9 +1,9 @@
-use ratatui::backend::CrosstermBackend;
-use ratatui::{Frame, Terminal};
-use ratatui::prelude::{Color, Line, Span, Style};
 use crossterm::execute;
-use crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
+use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
+use ratatui::backend::CrosstermBackend;
+use ratatui::prelude::{Color, Line, Span, Style};
 use ratatui::widgets::{Block, Borders, Paragraph};
+use ratatui::{Frame, Terminal};
 
 pub fn hash_tmb(text: String) -> u32 {
     let mut hash: u32 = 2166136261; // FNV offset basis
@@ -16,7 +16,9 @@ pub fn hash_tmb(text: String) -> u32 {
     hash
 }
 
-pub fn draw_color_test(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>) -> anyhow::Result<()> {
+pub fn draw_color_test(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
     // Build 16x16 grid of indexed colors (0..=255)
     let cols = 16;
     let mut lines: Vec<Line> = Vec::new();
@@ -36,15 +38,20 @@ pub fn draw_color_test(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>
 
     terminal.draw(|f| {
         let size = f.size();
-        let block = Paragraph::new(lines.clone())
-            .block(Block::default().title("Terminal 256-color test (press any key to exit)").borders(Borders::ALL));
+        let block = Paragraph::new(lines.clone()).block(
+            Block::default()
+                .title("Terminal 256-color test (press any key to exit)")
+                .borders(Borders::ALL),
+        );
         f.render_widget(block, size);
     })?;
 
     Ok(())
 }
 
-pub fn cleanup_term(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>) -> anyhow::Result<()> {
+pub fn cleanup_term(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 

@@ -213,6 +213,7 @@ dependencies = [
  "noise",
  "rand",
  "ratatui",
+ "regex",
  "serde",
  "serde_json",
 ]

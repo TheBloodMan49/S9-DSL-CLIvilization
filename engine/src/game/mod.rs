@@ -25,7 +25,10 @@ impl Game {
         }
     }
 
-    pub fn run(&mut self, terminal: &mut ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>) -> std::io::Result<()> {
+    pub fn run(
+        &mut self,
+        terminal: &mut ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>,
+    ) -> std::io::Result<()> {
         terminal.draw(|frame| draw_ui(frame, &self.state))?;
         Ok(())
     }

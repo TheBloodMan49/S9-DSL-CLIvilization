@@ -1,5 +1,5 @@
-use noise::{NoiseFn, Perlin};
 use crate::game::utils::hash_tmb;
+use noise::{NoiseFn, Perlin};
 
 #[derive(Clone)]
 pub enum Terrain {
@@ -7,7 +7,7 @@ pub enum Terrain {
     Plains,
     Desert,
     City,
-    Mountain
+    Mountain,
 }
 
 impl Terrain {
@@ -42,7 +42,8 @@ impl GameMap {
         for y in 0..height {
             for x in 0..width {
                 let elevation = perlin_elevation.get([x as f64 * scale, y as f64 * scale]);
-                let moisture = perlin_moisture.get([x as f64 * scale * 1.5, y as f64 * scale * 1.5]);
+                let moisture =
+                    perlin_moisture.get([x as f64 * scale * 1.5, y as f64 * scale * 1.5]);
 
                 tiles[y][x] = match (elevation, moisture) {
                     (e, _) if e < -0.2 => Terrain::Water,
@@ -65,8 +66,10 @@ impl GameMap {
             let mut placed = false;
 
             while attempts < max_attempts && !placed {
-                let x = hash_tmb(format!("{}-city-x-{}-{}", seed, cities.len(), attempts)) as usize % width;
-                let y = hash_tmb(format!("{}-city-y-{}-{}", seed, cities.len(), attempts)) as usize % height;
+                let x = hash_tmb(format!("{}-city-x-{}-{}", seed, cities.len(), attempts)) as usize
+                    % width;
+                let y = hash_tmb(format!("{}-city-y-{}-{}", seed, cities.len(), attempts)) as usize
+                    % height;
 
                 if matches!(tiles[y][x], Terrain::Plains) {
                     let mut valid = true;
@@ -93,12 +96,11 @@ impl GameMap {
             }
         }
 
-
         Self {
             tiles,
             width,
             height,
-            seed
+            seed,
         }
     }
 

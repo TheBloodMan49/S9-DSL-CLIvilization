@@ -2,19 +2,16 @@ mod game;
 
 use anyhow::Context;
 use anyhow::Result;
-use crossterm::{
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-    event::{self, Event, KeyCode, KeyModifiers},
-};
-use ratatui::{
-    prelude::*,
-    backend::CrosstermBackend,
-};
-use std::io;
 use clap::Parser;
+use crossterm::{
+    event::{self, Event, KeyCode, KeyModifiers},
+    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+};
+use ratatui::{backend::CrosstermBackend, prelude::*};
+use std::io;
 
-use crate::game::utils::{draw_color_test, cleanup_term};
+use crate::game::utils::{cleanup_term, draw_color_test};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
