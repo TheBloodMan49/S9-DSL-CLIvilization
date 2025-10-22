@@ -101,4 +101,9 @@ impl GameMap {
             seed
         }
     }
+
+    pub fn new_random() -> Self {
+        let seed = rand::random::<u64>().to_string();
+        Self::new(seed)
+    }
 }
