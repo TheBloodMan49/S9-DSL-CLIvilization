@@ -1,7 +1,7 @@
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Paragraph},
-    style::{Color, Style},
+    style::Style,
 };
 use super::state::GameState;
 
@@ -23,7 +23,7 @@ pub fn draw_ui(frame: &mut Frame, state: &GameState) {
 
 fn draw_status_bar(frame: &mut Frame, area: Rect, state: &GameState) {
     let status = Block::default()
-        .title(format!("Civilization {} BC - Turn {} (Press 'q' to quit)", state.year.abs(), state.turn))
+        .title(format!("Civilization {} BC - Turn {} (Press Ctrl+Q to quit)", state.year.abs(), state.turn))
         .borders(Borders::ALL);
     frame.render_widget(status, area);
 }
@@ -57,12 +57,23 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
 
 fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState) {
     let total_population: i32 = state.cities.iter().map(|city| city.population).sum();
-    let info = Paragraph::new(format!(
-        "Units: 1 Settler\nCities: {}\nPopulation: {}",
+
+    // Build seed line with editing indicator
+    let seed_line = if state.seed_editing {
+        format!("Seed: {}{} (Enter to apply)", state.seed_input, "|")
+    } else {
+        format!("Seed: {} (press 's' to edit)", state.seed_input)
+    };
+
+    let info_text = format!(
+        "Units: 1 Settler\nCities: {}\nPopulation: {}\n\n{}\n",
         state.cities.len(),
-        total_population
-    ))
-    .block(Block::default().title("Info").borders(Borders::ALL));
+        total_population,
+        seed_line
+    );
+
+    let info = Paragraph::new(info_text)
+        .block(Block::default().title("Info").borders(Borders::ALL));
     frame.render_widget(info, area);
 }
 
