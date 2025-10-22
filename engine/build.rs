@@ -24,17 +24,20 @@ fn main() {
     let mut source_file = BufWriter::new(
         File::create(out_dir.join("ast.rs")).expect("failed to create source source file"),
     );
+    writeln!(source_file, "use serde::{};\n", "{Serialize, Deserialize}").expect("failed to write to source file");
 
-    let content = std::fs::read_to_string(AST_FILE_PATH).expect("failed to read file");
-
+    // Regex
     let node_regex = Regex::new(NODE_REGEX).expect("failed to compile regex pattern");
     let property_regex = Regex::new(PROPERTY_REGEX).expect("failed to compile regex pattern");
+
+    let content = std::fs::read_to_string(AST_FILE_PATH).expect("failed to read file");
 
     for capture in node_regex.captures_iter(&content) {
         writeln!(
             source_file,
-            "-- {} --",
-            capture.name("NAME").expect("no capture group").as_str()
+            "#[derive(Serialize, Deserialize, Debug)]\npub struct {} {}",
+            capture.name("NAME").expect("no capture group").as_str(),
+            "{"
         )
         .expect("failed to write to source source file");
 
@@ -43,11 +46,24 @@ fn main() {
         {
             writeln!(
                 source_file,
-                "{}: {}",
-                s_capture.name("NAME").expect("no capture group").as_str(),
-                s_capture.name("TYPE").expect("no capture group").as_str()
+                "    pub {}: {},",
+                match s_capture.name("NAME").expect("no capture group").as_str() {
+                    "type" => "pType",
+                    name => name,
+                },
+                match s_capture.name("TYPE").expect("no capture group").as_str().replace("Array<", "Vec<").as_str() {
+                    "number" => "f64",
+                    "string" | "Value" => "String",
+                    typename => typename,
+                }
             )
             .expect("failed to write to source source file");
         }
+
+        writeln!(
+            source_file,
+            "{}\n",
+            "}"
+        ).expect("failed to write to source source file");
     }
 }

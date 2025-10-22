@@ -1,4 +1,5 @@
 mod game;
+mod ast;
 
 use anyhow::Context;
 use anyhow::Result;
