@@ -33,18 +33,22 @@ impl GameMap {
         let height = 40;
         let mut tiles = vec![vec![Terrain::Water; width]; height];
 
-        let perlin = Perlin::new(851);
+        let perlin_elevation = Perlin::new(456);
+        let perlin_moisture = Perlin::new(213);
         let scale = 0.1;
 
         for y in 0..height {
             for x in 0..width {
-                let noise_value = perlin.get([x as f64 * scale, y as f64 * scale]);
+                let elevation = perlin_elevation.get([x as f64 * scale, y as f64 * scale]);
+                let moisture = perlin_moisture.get([x as f64 * scale * 1.5, y as f64 * scale * 1.5]);
 
-                tiles[y][x] = match noise_value {
-                    v if v < -0.2 => Terrain::Water,
-                    v if v < 0.5 => Terrain::Plains,
-                    v if v < 0.6 => Terrain::Desert,
-                    _ => Terrain::Mountain,
+                tiles[y][x] = match (elevation, moisture) {
+                    (e, _) if e < -0.2 => Terrain::Water,
+                    (e, m) if (-0.2..0.3).contains(&e) && m < -0.5 => Terrain::Desert,
+                    (e, m) if (-0.2..0.3).contains(&e) && m >= -0.5 => Terrain::Plains,
+                    (e, m) if e >= 0.3 && m < -0.4 => Terrain::Desert,
+                    (e, _) if e >= 0.5 => Terrain::Mountain,
+                    _ => Terrain::Plains,
                 };
             }
         }
