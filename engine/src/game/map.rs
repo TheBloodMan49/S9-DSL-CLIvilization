@@ -1,3 +1,5 @@
+use noise::{NoiseFn, Perlin};
+
 #[derive(Clone)]
 pub enum Terrain {
     Water,
@@ -27,49 +29,30 @@ pub struct GameMap {
 
 impl GameMap {
     pub fn new() -> Self {
-        let mut tiles = vec![vec![Terrain::Water; 40]; 20];
+        let width = 80;
+        let height = 40;
+        let mut tiles = vec![vec![Terrain::Water; width]; height];
 
-        // First island (left)
-        for y in 4..12 {
-            for x in 5..15 {
-                tiles[y][x] = Terrain::Plains;
-            }
-        }
-        // Mountains on first island
-        tiles[6][7] = Terrain::Mountain;
-        tiles[6][8] = Terrain::Mountain;
-        tiles[7][7] = Terrain::Mountain;
-        // Desert area on first island
-        for y in 8..11 {
-            for x in 11..14 {
-                tiles[y][x] = Terrain::Desert;
-            }
-        }
+        let perlin = Perlin::new(851);
+        let scale = 0.1;
 
-        // Second island (right)
-        for y in 8..16 {
-            for x in 25..35 {
-                tiles[y][x] = Terrain::Plains;
-            }
-        }
-        // Mountains on second island
-        tiles[10][28] = Terrain::Mountain;
-        tiles[11][28] = Terrain::Mountain;
-        tiles[11][29] = Terrain::Mountain;
-        tiles[12][29] = Terrain::Mountain;
-        // Desert area on second island
-        for y in 12..15 {
-            for x in 30..33 {
-                tiles[y][x] = Terrain::Desert;
+        for y in 0..height {
+            for x in 0..width {
+                let noise_value = perlin.get([x as f64 * scale, y as f64 * scale]);
+
+                tiles[y][x] = match noise_value {
+                    v if v < -0.2 => Terrain::Water,
+                    v if v < 0.5 => Terrain::Plains,
+                    v if v < 0.6 => Terrain::Desert,
+                    _ => Terrain::Mountain,
+                };
             }
         }
 
         // Add some cities
-        tiles[7][9] = Terrain::City;
-        tiles[13][31] = Terrain::City;
-
-        let height = tiles.len();
-        let width = tiles[0].len();
+        tiles[10][20] = Terrain::City;
+        tiles[25][50] = Terrain::City;
+        tiles[30][60] = Terrain::City;
 
         Self {
             tiles,
