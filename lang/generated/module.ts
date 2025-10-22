@@ -8,7 +8,7 @@ import { ClIvilizationAstReflection } from './ast.js';
 import { ClIvilizationGrammar } from './grammar.js';
 
 export const ClIvilizationLanguageMetaData = {
-    languageId: 'cl-ivilization',
+    languageId: 'clivilization',
     fileExtensions: ['.civ'],
     caseInsensitive: false,
     mode: 'development'

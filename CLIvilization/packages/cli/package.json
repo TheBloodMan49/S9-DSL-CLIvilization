@@ -1,5 +1,5 @@
 {
-    "name": "cl-ivilization-cli",
+    "name": "clivilization-cli",
     "description": "The cli specific package",
     "version": "0.0.1",
     "type": "module",
@@ -13,7 +13,7 @@
         "src"
     ],
     "bin": {
-        "cl-ivilization-cli": "./bin/cli.js"
+        "clivilization-cli": "./bin/cli.js"
     },
     "scripts": {
         "clean": "shx rm -fr *.tsbuildinfo out",
@@ -21,7 +21,7 @@
         "build:clean": "npm run clean && npm run build"
     },
     "dependencies": {
-        "cl-ivilization-language": "0.0.1",
+        "clivilization-language": "0.0.1",
         "chalk": "~5.3.0",
         "commander": "~11.1.0"
     },

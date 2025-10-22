@@ -1,7 +1,7 @@
 import { startLanguageServer } from 'langium/lsp';
 import { NodeFileSystem } from 'langium/node';
 import { createConnection, ProposedFeatures } from 'vscode-languageserver/node.js';
-import { createClIvilizationServices } from 'cl-ivilization-language';
+import { createClIvilizationServices } from 'clivilization-language';
 
 // Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);

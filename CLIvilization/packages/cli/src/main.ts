@@ -1,5 +1,5 @@
-import type { Model } from 'cl-ivilization-language';
-import { createClIvilizationServices, CLIvilizationLanguageMetaData } from 'cl-ivilization-language';
+import type { Model } from 'clivilization-language';
+import { createClIvilizationServices, CLIvilizationLanguageMetaData } from 'clivilization-language';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { extractAstNode } from './util.js';

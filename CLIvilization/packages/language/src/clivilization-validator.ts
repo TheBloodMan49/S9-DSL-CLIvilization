@@ -1,6 +1,6 @@
 import type { ValidationChecks } from 'langium';
 import type { ClIvilizationAstType } from './generated/ast.js';
-import type { ClIvilizationServices } from './cl-ivilization-module.js';
+import type { ClIvilizationServices } from './clivilization-module.js';
 
 /**
  * Register custom validation checks.

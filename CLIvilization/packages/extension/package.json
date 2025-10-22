@@ -12,31 +12,32 @@
     ],
     "contributes": {
         "languages": [{
-            "id": "cl-ivilization",
-            "aliases": ["CLIvilization", "cl-ivilization"],
+            "id": "clivilization",
+            "aliases": ["CLIvilization", "clivilization"],
             "extensions": [".civ"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
-            "language": "cl-ivilization",
-            "scopeName": "source.cl-ivilization",
-            "path": "syntaxes/cl-ivilization.tmLanguage.json"
+            "language": "clivilization",
+            "scopeName": "source.clivilization",
+            "path": "syntaxes/clivilization.tmLanguage.json"
         }]
     },
     "activationEvents": [
-        "onLanguage:cl-ivilization"
+        "onLanguage:clivilization"
     ],
     "main": "./out/extension/main.cjs",
     "scripts": {
         "clean": "shx rm -fr *.tsbuildinfo out syntaxes",
-        "vscode:prepublish": "npm run build",
-        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/cl-ivilization.tmLanguage.json ./syntaxes/cl-ivilization.tmLanguage.json",
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "build:prepare": "shx mkdir -p ./syntaxes/ && shx cp -f ../language/syntaxes/clivilization.tmLanguage.json ./syntaxes/clivilization.tmLanguage.json",
         "build": "npm run build:prepare && tsc -b tsconfig.json && node esbuild.mjs",
         "build:clean": "npm run clean && npm run build",
-        "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\""
+        "watch": "npm run build:prepare && concurrently -n tsc,esbuild -c blue,yellow \"tsc -b tsconfig.json --watch\" \"node esbuild.mjs --watch\"",
+        "esbuild-base": "esbuild ./src/extension/main.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node"
     },
     "dependencies": {
-        "cl-ivilization-language": "0.0.1",
+        "clivilization-language": "0.0.1",
         "vscode-languageclient": "~9.0.1",
         "vscode-languageserver": "~9.0.1"
     },

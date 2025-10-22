@@ -1,5 +1,5 @@
 {
-    "name": "cl-ivilization-workspace",
+    "name": "clivilization-workspace",
     "description": "Base workspace package",
     "version": "0.0.1",
     "type": "module",
@@ -15,6 +15,7 @@
     },
     "devDependencies": {
         "@types/node": "~20.17.48",
+        "esbuild": "^0.25.11",
         "shx": "~0.4.0",
         "typescript": "~5.8.3"
     },

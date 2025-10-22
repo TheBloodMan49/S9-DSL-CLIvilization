@@ -2,13 +2,13 @@
     "projectName": "ClIvilization",
     "languages": [
         {
-            "id": "cl-ivilization",
-            "grammar": "src/cl-ivilization.langium",
+            "id": "clivilization",
+            "grammar": "src/clivilization.langium",
             "fileExtensions": [
                 "civ"
             ],
             "textMate": {
-                "out": "syntaxes/cl-ivilization.tmLanguage.json"
+                "out": "syntaxes/clivilization.tmLanguage.json"
             }
         }
     ],

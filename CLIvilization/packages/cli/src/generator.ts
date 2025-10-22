@@ -1,4 +1,4 @@
-import type { Model } from 'cl-ivilization-language';
+import type { Model } from 'clivilization-language';
 import { expandToNode, toString } from 'langium/generate';
 import * as fs from 'node:fs';
 import { extractDestinationAndName } from './util.js';
