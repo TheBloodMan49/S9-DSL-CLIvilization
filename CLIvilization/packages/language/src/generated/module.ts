@@ -5,9 +5,9 @@
 
 import type { LangiumSharedCoreServices, LangiumCoreServices, LangiumGeneratedCoreServices, LangiumGeneratedSharedCoreServices, LanguageMetaData, Module } from 'langium';
 import { ClIvilizationAstReflection } from './ast.js';
-import { ClIvilizationGrammar } from './grammar.js';
+import { CLIvilizationGrammar } from './grammar.js';
 
-export const ClIvilizationLanguageMetaData = {
+export const CLIvilizationLanguageMetaData = {
     languageId: 'clivilization',
     fileExtensions: ['.civ'],
     caseInsensitive: false,
@@ -18,8 +18,8 @@ export const ClIvilizationGeneratedSharedModule: Module<LangiumSharedCoreService
     AstReflection: () => new ClIvilizationAstReflection()
 };
 
-export const ClIvilizationGeneratedModule: Module<LangiumCoreServices, LangiumGeneratedCoreServices> = {
-    Grammar: () => ClIvilizationGrammar(),
-    LanguageMetaData: () => ClIvilizationLanguageMetaData,
+export const CLIvilizationGeneratedModule: Module<LangiumCoreServices, LangiumGeneratedCoreServices> = {
+    Grammar: () => CLIvilizationGrammar(),
+    LanguageMetaData: () => CLIvilizationLanguageMetaData,
     parser: {}
 };
