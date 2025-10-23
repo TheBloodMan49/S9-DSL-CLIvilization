@@ -8,11 +8,11 @@ use std::path::Path;
 const AST_FILE_PATH: &str = "../lang/generated/ast.ts";
 const NODE_REGEX: &str =
     r"export interface (?<NAME>[a-zA-Z_]+) extends langium\.AstNode \{\n(?<PROPS>[^}]+)\n}";
-const PROPERTY_REGEX: &str = r"\s+(?<NAME>[a-zA-Z_]+): (?<TYPE>[a-zA-Z<>_]+);";
+const PROPERTY_REGEX: &str = r"\s+(?<NAME>[a-zA-Z_]+)(?<OPTION>\?|): (?<TYPE>[a-zA-Z<>_]+);";
 const ALIAS_REGEX: &str = r"export type (?<NAME>[a-zA-Z_]+) = (?<PROP>[a-zA-Z_]+);";
 const ENUM_REGEX: &str =
     r#"export type (?<NAME>[a-zA-Z_]+) = (?<PROPS>[a-zA-Z_'"]+(\s*\|\s*[a-zA-Z_'"]+)+);"#;
-const ENUM_VARIANT_REGEX: &str = r"\s+(\|\s+|)(?<TYPE>[a-zA-Z_]+)";
+const ENUM_VARIANT_REGEX: &str = r#"\s*(\|\s+|)(?<TYPE>([a-zA-Z_]+|'[a-zA-Z_]+'))"#;
 
 fn main() {
     // Tell cargo when to rerun
@@ -32,7 +32,7 @@ fn main() {
     writeln!(source_file, "use serde::{{Serialize, Deserialize}};\n")
         .expect("failed to write to source file");
     generate_aliases(&mut source_file, &content);
-    generate_enmus(&mut source_file, &content);
+    generate_enums(&mut source_file, &content);
     generate_nodes(&mut source_file, &content);
 }
 
@@ -58,24 +58,41 @@ fn generate_aliases(source_file: &mut BufWriter<File>, content: &str) {
     }
 }
 
-fn generate_enmus(source_file: &mut BufWriter<File>, content: &str) {
+fn generate_enums(source_file: &mut BufWriter<File>, content: &str) {
     let enum_regex = Regex::new(ENUM_REGEX).expect("failed to compile regex pattern");
-    let enum_variant_regex = Regex::new(ENUM_VARIANT_REGEX).expect("failed to compile regex pattern");
+    let enum_variant_regex =
+        Regex::new(ENUM_VARIANT_REGEX).expect("failed to compile regex pattern");
 
     for capture in enum_regex.captures_iter(content) {
+        let name = capture.name("NAME").expect("no capture group").as_str();
+
+        if name.contains("TokenNames") || name.contains("KeywordNames") {
+            continue;
+        }
+
         writeln!(
             source_file,
-            "#[derive(Serialize, Deserialize, Debug)]\npub enum {} {{",
+            "#[derive(Serialize, Deserialize, Debug)]\n#[serde(untagged)]\npub enum {} {{",
             capture.name("NAME").expect("no capture group").as_str()
         )
-            .expect("failed to write to source source file");
+        .expect("failed to write to source source file");
 
-        for s_capture in enum_variant_regex.captures_iter(capture.name("PROPS").expect("no capture group").as_str()) {
-            writeln!(
-                source_file,
-                "    {0}({0}),",
-                s_capture.name("TYPE").expect("no capture group").as_str(),
-            ).expect("failed to write to source source file");
+        for s_capture in enum_variant_regex
+            .captures_iter(capture.name("PROPS").expect("no capture group").as_str())
+        {
+            let type_name = s_capture.name("TYPE").expect("no capture group").as_str();
+
+            if type_name.contains("\"") || type_name.contains("'") {
+                writeln!(
+                    source_file,
+                    "    {},",
+                    type_name.replace("\"", "").replace("'", "")
+                )
+                .expect("failed to write to source source file");
+            } else {
+                writeln!(source_file, "    {type_name}({type_name}),")
+                    .expect("failed to write to source source file");
+            }
         }
 
         writeln!(source_file, "}}\n").expect("failed to write to source source file");
@@ -97,13 +114,23 @@ fn generate_nodes(source_file: &mut BufWriter<File>, content: &str) {
         for s_capture in
             property_regex.captures_iter(capture.name("PROPS").expect("no capture group").as_str())
         {
-            writeln!(
-                source_file,
-                "    pub {}: {},",
-                s_capture.name("NAME").expect("no capture group").as_str(),
-                process_type(s_capture.name("TYPE").expect("no capture group").as_str())
-            )
-            .expect("failed to write to source source file");
+            if s_capture.name("OPTION").expect("no capture group").as_str().is_empty() {
+                writeln!(
+                    source_file,
+                    "    pub {}: {},",
+                    s_capture.name("NAME").expect("no capture group").as_str(),
+                    process_type(s_capture.name("TYPE").expect("no capture group").as_str())
+                )
+                    .expect("failed to write to source source file");
+            } else {
+                writeln!(
+                    source_file,
+                    "    pub {}: Option<{}>,",
+                    s_capture.name("NAME").expect("no capture group").as_str(),
+                    process_type(s_capture.name("TYPE").expect("no capture group").as_str())
+                )
+                    .expect("failed to write to source source file");
+            }
         }
 
         writeln!(source_file, "}}\n").expect("failed to write to source source file");

@@ -23,7 +23,7 @@ City:
         'y' '=' y=INT
         'color' '=' color=COLOR
         'starting_resources' '=' startingResources=INT
-        'type' '=' type=PlayerType
+        'player_type' '=' playerType=PlayerType
         'civilization' '=' civilization=Value
         'nb_slots_buildings' '=' nbSlotsBuildings=INT
         'starting_buildings' '=' buildings=BuildingInstanceArray

@@ -46,6 +46,7 @@ export type ClIvilizationKeywordNames =
     | "nb_slots_buildings"
     | "nb_slots_units"
     | "nb_turns"
+    | "player_type"
     | "prerequisites"
     | "production"
     | "resources_spent"
@@ -163,8 +164,8 @@ export interface City extends langium.AstNode {
     name: Value;
     nbSlotsBuildings: number;
     nbSlotsUnits: number;
+    playerType: PlayerType;
     startingResources: number;
-    type: PlayerType;
     units: UnitInstanceArray;
     whitelist_buildings?: IntArray;
     whitelist_units?: IntArray;
@@ -182,8 +183,8 @@ export const City = {
     name: 'name',
     nbSlotsBuildings: 'nbSlotsBuildings',
     nbSlotsUnits: 'nbSlotsUnits',
+    playerType: 'playerType',
     startingResources: 'startingResources',
-    type: 'type',
     units: 'units',
     whitelist_buildings: 'whitelist_buildings',
     whitelist_units: 'whitelist_units',
@@ -529,11 +530,11 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
                 nbSlotsUnits: {
                     name: City.nbSlotsUnits
                 },
+                playerType: {
+                    name: City.playerType
+                },
                 startingResources: {
                     name: City.startingResources
-                },
-                type: {
-                    name: City.type
                 },
                 units: {
                     name: City.units

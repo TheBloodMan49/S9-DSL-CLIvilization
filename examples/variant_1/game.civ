@@ -8,7 +8,7 @@ Rome {
     y=1
     color=#000000
     starting_resources=10
-    type=PLAYER
+    player_type=PLAYER
     civilization="Test"
     nb_slots_buildings=2
     starting_buildings=[

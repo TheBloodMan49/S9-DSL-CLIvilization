@@ -287,7 +287,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Keyword",
-            "value": "type"
+            "value": "player_type"
           },
           {
             "$type": "Keyword",
@@ -295,7 +295,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "type",
+            "feature": "playerType",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
