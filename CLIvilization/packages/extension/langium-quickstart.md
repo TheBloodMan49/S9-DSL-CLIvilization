@@ -8,8 +8,8 @@ Welcome to your Langium VSCode extension. This folder contains all necessary fil
 - [tsconfig.json](./tsconfig.json) - The packages specific TypeScript compiler configuration extending the [base config](../../tsconfig.json).
 - [esbuild.mjs](./esbuild.mjs) - Configuration file for esbuild that is used to create the VSCode extension bundle.
 - [language-configuration.json](./language-configuration.json) - the language configuration used in the VS Code editor, defining the tokens that are used for comments and brackets.
-- [src/language/main.ts](./src/language/main.ts) - The entry point of the language server process.
-- [src/extension/main.ts](./src/extension/main.ts) - The main code of the extension, which is responsible for launching a language server and client.
+- [src/language/main.js](./src/language/main.ts) - The entry point of the language server process.
+- [src/extension/main.js](./src/extension/main.ts) - The main code of the extension, which is responsible for launching a language server and client.
 
 ## Get up and running straight away
 
