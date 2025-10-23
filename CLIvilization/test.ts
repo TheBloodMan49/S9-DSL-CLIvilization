@@ -11,7 +11,6 @@ fs.readFile("../examples/variant_1/game.civ", "utf-8", async (err, data) => {
         console.error(err)
     } else {
         const document = await parse(data, {})
-        console.log(document.parseResult.value.sections[1].cities)
         console.log(JSON.stringify(document.parseResult.value, (key, value) => {
             if (key.startsWith('$')) return undefined; // Exclude Langium-internal properties
             return value;
