@@ -13,7 +13,7 @@ Rome {
     nb_slots_buildings=2
     starting_buildings=[
         {
-            id_building=1
+            id_building=caserne
             level=0
         }
     ]
@@ -31,12 +31,12 @@ Athene {
     y=1
     color=#000000
     starting_resources=10
-    type=AI
+    player_type=AI
     civilization="Test"
     nb_slots_buildings=2
     starting_buildings=[
         {
-            id_building=1
+            id_building=caserne
             level=0
         }
     ]
@@ -88,8 +88,8 @@ caserne2 {
 
 [units]
 légionnaire {
-    attack=1        
+    attack=1
 }
 légionnaire {
-    attack=1        
+    attack=1
 }

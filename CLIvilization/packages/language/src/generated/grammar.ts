@@ -625,7 +625,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@19"
               },
               "arguments": []
             }

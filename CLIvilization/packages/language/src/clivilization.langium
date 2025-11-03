@@ -45,7 +45,7 @@ BuildingInstanceArray:
 
 BuildingInstance:
     '{'
-        'id_building' '=' id_building=INT
+        'id_building' '=' id_building=Value
         'level' '=' level=INT
     '}'
 ;

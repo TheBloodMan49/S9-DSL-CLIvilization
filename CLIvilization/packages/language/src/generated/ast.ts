@@ -109,7 +109,7 @@ export function isBuildingDefArray(item: unknown): item is BuildingDefArray {
 export interface BuildingInstance extends langium.AstNode {
     readonly $container: BuildingInstanceArray;
     readonly $type: 'BuildingInstance';
-    id_building: number;
+    id_building: Value;
     level: number;
 }
 
