@@ -25,6 +25,8 @@ pub struct GameState {
     pub camera_x: i32,
     pub camera_y: i32,
     pub camera_mode: bool,
+
+    pub zoom_level: u8, // 1, 2, or 3
 }
 
 impl GameState {
@@ -45,6 +47,7 @@ impl GameState {
             camera_x: 0,
             camera_y: 0,
             camera_mode: false,
+            zoom_level: 1,
         }
     }
 
@@ -82,5 +85,36 @@ impl GameState {
             self.camera_x = (self.camera_x + dx).clamp(0, self.map.width as i32 - 1);
             self.camera_y = (self.camera_y + dy).clamp(0, self.map.height as i32 - 1);
         }
+    }
+
+    pub fn cycle_zoom(&mut self) {
+        let old_zoom = self.zoom_level;
+        self.zoom_level = match self.zoom_level {
+            1 => 2,
+            2 => 3,
+            _ => 1,
+        };
+
+        match (old_zoom, self.zoom_level) {
+            (1, 2) => {
+                // Zooming from 1x to 2x: multiply by 2
+                self.camera_x *= 2;
+                self.camera_y *= 2;
+            }
+            (2, 3) => {
+                // Zooming from 2x to 3x: multiply by 3/2
+                self.camera_x = (self.camera_x * 3) / 2;
+                self.camera_y = (self.camera_y * 3) / 2;
+            }
+            (3, 1) => {
+                // Zooming from 3x back to 1x: divide by 3
+                self.camera_x /= 3;
+                self.camera_y /= 3;
+            }
+            _ => {}
+        }
+
+        self.camera_x = self.camera_x.clamp(0, self.map.width as i32 - 1);
+        self.camera_y = self.camera_y.clamp(0, self.map.height as i32 - 1);
     }
 }

@@ -54,6 +54,9 @@ impl Game {
                         self.state.toggle_camera_mode();
                         self.ui_state = UiState::CameraMode;
                     }
+                    KeyCode::Char('z') | KeyCode::Char('Z') => {
+                        self.state.cycle_zoom();
+                    }
                     _ => {
                         // other global key handling could go here
                     }
