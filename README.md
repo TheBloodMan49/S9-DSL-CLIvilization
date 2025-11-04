@@ -55,13 +55,6 @@ vsce package
 
 The newly created `.vsix` file can be found in the same directory.
 
-## Variants
-
-The DSL supports different game variants, which can be specified in the game definition.
-Each variant can modify the behavior of buildings, units, and other game mechanics.
-
-You can find example variant definitions in the [`examples/`](examples/) directory.
-
 ## MetaModel
 
 The metamodel of the DSL is defined using a class diagram as shown below:
@@ -69,3 +62,21 @@ The metamodel of the DSL is defined using a class diagram as shown below:
 ![Metamodel](model/metamodel.png)
 
 The textual representation of the metamodel in PlantUML format can be found in the `model/metamodel.puml` file.
+
+
+## Variants
+
+The DSL supports different game variants, which can be specified in the game definition.
+Each variant can modify the behavior of buildings, units, and other game mechanics.
+
+You can find example variant definitions in the [`examples/`](examples/) directory.
+You can also read the variability notes in [`docs/variability.md`](docs/variability.md).
+
+## Validation
+
+The DSL includes validation rules to ensure that the defined game state is consistent and adheres to the expected structure.
+Validation checks include:
+- Cross references with BuildingInstance and UnitInstance on id_building and id_unit
+- Ensuring that every City, BuildingInstance, and UnitInstance has a unique identifier
+
+Validation are in [`CLIvilization/packages/language/src/clivilization-validator.ts`](CLIvilization/packages/language/src/clivilization-validator.ts)
