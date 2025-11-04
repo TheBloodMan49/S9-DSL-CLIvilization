@@ -1,10 +1,6 @@
 {
   "sections": [
     {
-      "x": 20,
-      "y": 20
-    },
-    {
       "cities": [
         {
           "name": "Demacia",
@@ -41,8 +37,11 @@
       ]
     },
     {
+      "mapX": 160,
+      "mapY": 40,
       "currentTurn": 2,
-      "uiColor": "#FF00FF"
+      "uiColor": "#FF00FF",
+      "seed": "Swain"
     },
     {
       "nbTurns": 120,

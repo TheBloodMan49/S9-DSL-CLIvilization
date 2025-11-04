@@ -30,10 +30,9 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new() -> Self {
-        let initial_seed = "pokemon".to_string();
+    pub fn new(map: GameMap) -> Self {
         Self {
-            map: GameMap::new(initial_seed.clone()),
+            map: map.clone(),
             resources: Resources {
                 gold: 100,
                 science: 0,
@@ -42,7 +41,7 @@ impl GameState {
             cities: vec![City { population: 1 }],
             turn: 1,
             year: -2500,
-            seed_input: initial_seed,
+            seed_input: map.seed,
             seed_editing: false,
             camera_x: 0,
             camera_y: 0,
@@ -72,7 +71,7 @@ impl GameState {
 
     // Apply the current seed: rebuild the map with the seed and stop editing
     pub fn submit_seed(&mut self) {
-        self.map = GameMap::new(self.seed_input.clone());
+        self.map = GameMap::new(self.seed_input.clone(), self.map.width, self.map.height);
         self.seed_editing = false;
     }
 

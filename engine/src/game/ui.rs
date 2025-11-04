@@ -8,7 +8,11 @@ use ratatui::{
 use crate::game::utils::hsv_to_rgb;
 use super::state::GameState;
 
-pub fn draw_ui(frame: &mut Frame, state: &GameState) {
+pub struct UiConfig {
+    pub color: Color
+}
+
+pub fn draw_ui(frame: &mut Frame, state: &GameState, ui_config: &UiConfig) {
     let size = frame.size();
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -19,33 +23,34 @@ pub fn draw_ui(frame: &mut Frame, state: &GameState) {
         ])
         .split(size);
 
-    draw_status_bar(frame, chunks[0], state);
-    draw_main_area(frame, chunks[1], state);
-    draw_resources_bar(frame, chunks[2], state);
+    draw_status_bar(frame, chunks[0], state, ui_config);
+    draw_main_area(frame, chunks[1], state, ui_config);
+    draw_resources_bar(frame, chunks[2], state, ui_config);
 }
 
-fn draw_status_bar(frame: &mut Frame, area: Rect, state: &GameState) {
+fn draw_status_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let status = Block::default()
         .title(format!(
             "Civilization {} BC - Turn {} (Press Ctrl+Q to quit)",
             state.year.abs(),
             state.turn
         ))
-        .borders(Borders::ALL);
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(ui_config.color));
     frame.render_widget(status, area);
 }
 
-fn draw_main_area(frame: &mut Frame, area: Rect, state: &GameState) {
+fn draw_main_area(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let areas = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])
         .split(area);
 
-    draw_map(frame, areas[0], state);
-    draw_info_panel(frame, areas[1], state);
+    draw_map(frame, areas[0], state, ui_config);
+    draw_info_panel(frame, areas[1], state, ui_config);
 }
 
-fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
+fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let zoom = state.zoom_level as usize;
 
     let visible_width = ((area.width as usize).saturating_sub(2) / zoom).min(state.map.width);
@@ -105,12 +110,18 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
         format!("Map (Press 'v' for camera, 'z' to zoom - Zoom: {}x)", state.zoom_level)
     };
 
+    // apply ui_config.color to the map widget border
     let map_widget = Paragraph::new(map_lines)
-        .block(Block::default().title(title).borders(Borders::ALL));
+        .block(
+            Block::default()
+                .title(title)
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(ui_config.color))
+        );
     frame.render_widget(map_widget, area);
 }
 
-fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState) {
+fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let total_population: i32 = state.cities.iter().map(|city| city.population).sum();
 
     // Build seed line with editing indicator
@@ -127,17 +138,25 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState) {
         seed_line
     );
 
-    let info =
-        Paragraph::new(info_text).block(Block::default().title("Info").borders(Borders::ALL));
+    let info = Paragraph::new(info_text)
+        .block(Block::default()
+            .title("Info")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ui_config.color))
+        );
     frame.render_widget(info, area);
 }
 
-fn draw_resources_bar(frame: &mut Frame, area: Rect, state: &GameState) {
+fn draw_resources_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let resources = Paragraph::new(format!(
         "Gold: {}  Science: {}  Culture: {}",
         state.resources.gold, state.resources.science, state.resources.culture
     ))
-    .block(Block::default().title("Resources").borders(Borders::ALL));
+    .block(Block::default()
+        .title("Resources")
+        .borders(Borders::ALL)
+        .border_style(Style::default().fg(ui_config.color))
+    );
     frame.render_widget(resources, area);
 }
 

@@ -33,6 +33,18 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     (r, g, b)
 }
 
+pub fn str_to_color(s: &str) -> ratatui::style::Color {
+    // Str is in html hex format: #RRGGBB
+    if s.len() != 7 || !s.starts_with('#') {
+        ratatui::style::Color::White
+    } else {
+        let r = u8::from_str_radix(&s[1..3], 16).unwrap_or(255);
+        let g = u8::from_str_radix(&s[3..5], 16).unwrap_or(255);
+        let b = u8::from_str_radix(&s[5..7], 16).unwrap_or(255);
+        ratatui::style::Color::Rgb(r, g, b)
+    }
+}
+
 pub fn write_to_file(filename: &str, content: &str) -> Result<()>{
     // Create output/ directory if it doesn't exist
     std::fs::create_dir_all("output")?;

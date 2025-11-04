@@ -3,7 +3,9 @@ pub mod state;
 pub mod ui;
 pub mod utils;
 
-use crate::game::utils::write_to_file;
+use anyhow::Context;
+use crate::game::ui::UiConfig;
+use crate::game::utils::{str_to_color, write_to_file};
 use self::state::GameState;
 use self::ui::draw_ui;
 
@@ -17,21 +19,60 @@ pub enum UiState {
 pub struct Game {
     state: GameState,
     ui_state: UiState,
+    ui_config: UiConfig
 }
 
 impl Game {
     pub fn new() -> Self {
+        let map = map::GameMap::new_random(160usize, 40usize);
         Self {
-            state: GameState::new(),
+            state: GameState::new(map),
             ui_state: UiState::Normal,
+            ui_config: UiConfig {
+                color: ratatui::style::Color::Rgb(255, 255, 255),
+            },
         }
     }
+
+    pub fn from_config(config_path: &str) -> anyhow::Result<Self> {
+
+        // Read file
+        let contents = std::fs::read_to_string(config_path)
+            .context(format!("failed to read config file `{}`", config_path))?;
+
+        // Parse JSON into AST model
+        let model: crate::ast::Model = serde_json::from_str(&contents)
+            .context("failed to parse config JSON")?;
+
+        // Start from default game state
+        let mut game = Game::new();
+
+        // Walk sections and apply relevant settings (only Game section is needed for now)
+        for section in model.sections {
+            if let crate::ast::Section::Game(g) = section {
+                // ui color
+                game.ui_config.color = str_to_color(&g.uiColor);
+
+                // map settings
+                let map = map::GameMap::new(
+                    g.seed.unwrap_or("pokemon".into()),
+                    g.mapX as usize,
+                    g.mapY as usize,
+                );
+                game.state.map = map;
+                game.state.seed_input = game.state.map.seed.clone();
+            }
+        }
+
+        Ok(game)
+    }
+
 
     pub fn run(
         &mut self,
         terminal: &mut ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>,
     ) -> std::io::Result<()> {
-        terminal.draw(|frame| draw_ui(frame, &self.state))?;
+        terminal.draw(|frame| draw_ui(frame, &self.state, &self.ui_config))?;
         Ok(())
     }
 
@@ -48,7 +89,7 @@ impl Game {
                     }
                     // Pick random seed
                     KeyCode::Char('r') => {
-                        self.state.map = map::GameMap::new_random();
+                        self.state.map = map::GameMap::new_random(self.state.map.width, self.state.map.height);
                         self.state.seed_input = self.state.map.seed.clone();
                     }
                     KeyCode::Char('v') | KeyCode::Char('V') => {

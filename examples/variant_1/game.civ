@@ -24,8 +24,8 @@ Noxus {
 }
 
 [game]
-map_x=20
-map_y=10
+map_x=160
+map_y=40
 current_turn=2
 ui_color=#FF00FF
 seed=Swain

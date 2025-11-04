@@ -75,7 +75,7 @@ impl Terrain {
     }
 }
 
-
+#[derive(Clone)]
 pub struct GameMap {
     pub tiles: Vec<Vec<Terrain>>,
     pub width: usize,
@@ -84,9 +84,7 @@ pub struct GameMap {
 }
 
 impl GameMap {
-    pub fn new(seed: String) -> Self {
-        let width = 160;
-        let height = 40;
+    pub fn new(seed: String, width: usize, height: usize) -> Self {
         let mut tiles = vec![vec![Terrain::Water; width]; height];
 
         let perlin_elevation = Perlin::new(hash_tmb(seed.clone()));
@@ -120,10 +118,10 @@ impl GameMap {
             let mut placed = false;
 
             while attempts < max_attempts && !placed {
-                let x = hash_tmb(format!("{}-city-x-{}-{}", seed, cities.len(), attempts)) as usize
-                    % width;
-                let y = hash_tmb(format!("{}-city-y-{}-{}", seed, cities.len(), attempts)) as usize
-                    % height;
+                let x = (hash_tmb(format!("{}-city-x-{}-{}", seed, cities.len(), attempts)) as usize
+                    % width) as usize;
+                let y = (hash_tmb(format!("{}-city-y-{}-{}", seed, cities.len(), attempts)) as usize
+                    % height) as usize;
 
                 if matches!(tiles[y][x], Terrain::Plains) {
                     let mut valid = true;
@@ -158,9 +156,9 @@ impl GameMap {
         }
     }
 
-    pub fn new_random() -> Self {
+    pub fn new_random(width: usize, height: usize) -> Self {
         let seed = rand::random::<u64>().to_string();
-        Self::new(seed)
+        Self::new(seed, width, height)
     }
 
     pub fn to_string(&self) -> String {

@@ -20,8 +20,12 @@ use crate::game::ui::{cleanup_term, draw_color_test_256, draw_color_test_rgb};
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// Run a color test screen instead of the game
-    #[arg(long, default_value = "", value_parser = ["", "256", "rgb"])]
-    test_color: String,
+    #[arg(long, value_parser = ["256", "rgb"])]
+    test_color: Option<String>,
+
+    /// Load config from file
+    #[arg(long)]
+    config: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -36,26 +40,30 @@ fn main() -> Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     // If test_color was requested, show the color test and exit on any key press
-    match matches.test_color.as_str() {
-        "256" => {
-            draw_color_test_256(&mut terminal)?;
-            // Wait for any key press
-            event::read()?;
-            cleanup_term(&mut terminal)?;
-            return Ok(());
+    if let Some(test_type) = matches.test_color {
+        match test_type.as_str() {
+            "256" => draw_color_test_256(&mut terminal)?,
+            "rgb" => draw_color_test_rgb(&mut terminal)?,
+            _ => unreachable!(),
         }
-        "rgb" => {
-            draw_color_test_rgb(&mut terminal)?;
-            // Wait for any key press
-            event::read()?;
-            cleanup_term(&mut terminal)?;
-            return Ok(());
+        // Wait for a key press
+        loop {
+            if event::poll(std::time::Duration::from_millis(100))? {
+                if let Event::Key(_) = event::read()? {
+                    break;
+                }
+            }
         }
-        _ => {}
+        cleanup_term(&mut terminal)?;
+        return Ok(());
     }
-
-    // Create a game instance
-    let mut game = game::Game::new();
+    
+    // Load config if provided
+    let mut game = if let Some(config_path) = matches.config {
+        game::Game::from_config(&config_path)?
+    } else {
+        game::Game::new()
+    };
 
     // Game loop
     loop {
