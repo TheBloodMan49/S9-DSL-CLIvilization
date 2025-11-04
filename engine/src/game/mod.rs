@@ -10,6 +10,7 @@ use self::ui::draw_ui;
 pub enum UiState {
     Normal,
     EditingSeed,
+    CameraMode,
 }
 
 pub struct Game {
@@ -44,6 +45,10 @@ impl Game {
                         self.state.toggle_seed_edit();
                         self.ui_state = UiState::EditingSeed;
                     }
+                    KeyCode::Char('v') | KeyCode::Char('V') => {
+                        self.state.toggle_camera_mode();
+                        self.ui_state = UiState::CameraMode;
+                    }
                     _ => {
                         // other global key handling could go here
                     }
@@ -72,6 +77,29 @@ impl Game {
                     // character input while editing (including 's')
                     KeyCode::Char(c) => {
                         self.state.add_seed_char(c);
+                    }
+                    _ => {}
+                }
+            }
+            UiState::CameraMode => {
+                match key.code {
+                    // exit camera mode
+                    KeyCode::Char('v') | KeyCode::Char('V') | KeyCode::Esc => {
+                        self.state.toggle_camera_mode();
+                        self.ui_state = UiState::Normal;
+                    }
+                    // camera movement
+                    KeyCode::Char('z') | KeyCode::Char('Z') => {
+                        self.state.move_camera(0, -1);
+                    }
+                    KeyCode::Char('s') | KeyCode::Char('S') => {
+                        self.state.move_camera(0, 1);
+                    }
+                    KeyCode::Char('q') | KeyCode::Char('Q') => {
+                        self.state.move_camera(-1, 0);
+                    }
+                    KeyCode::Char('d') | KeyCode::Char('D') => {
+                        self.state.move_camera(1, 0);
                     }
                     _ => {}
                 }

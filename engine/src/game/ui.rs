@@ -43,13 +43,24 @@ fn draw_main_area(frame: &mut Frame, area: Rect, state: &GameState) {
 }
 
 fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
-    let map_lines: Vec<Line> = state
-        .map
-        .tiles
+    // Calculate visible area dimensions
+    let visible_width = (area.width as usize).min(state.map.width);
+    let visible_height = (area.height.saturating_sub(2) as usize).min(state.map.height); // -2 for borders
+
+    // Calculate start position based on camera
+    let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));
+    let start_y = (state.camera_y as usize).min(state.map.height.saturating_sub(visible_height));
+
+    // Build only the visible portion of the map
+    let map_lines: Vec<Line> = state.map.tiles
         .iter()
+        .skip(start_y)
+        .take(visible_height)
         .map(|row| {
             let spans: Vec<Span> = row
                 .iter()
+                .skip(start_x)
+                .take(visible_width)
                 .map(|terrain| {
                     let (color, symbol) = terrain.to_style();
                     Span::styled(symbol, Style::default().fg(color).bg(color))
@@ -59,8 +70,14 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
         })
         .collect();
 
-    let map_widget =
-        Paragraph::new(map_lines).block(Block::default().title("Map").borders(Borders::ALL));
+    let title = if state.camera_mode {
+        format!("Map (Camera Mode - Position: {},{}) - Press 'v' or Esc to exit", state.camera_x, state.camera_y)
+    } else {
+        "Map (Press 'v' for camera mode)".to_string()
+    };
+
+    let map_widget = Paragraph::new(map_lines)
+        .block(Block::default().title(title).borders(Borders::ALL));
     frame.render_widget(map_widget, area);
 }
 
