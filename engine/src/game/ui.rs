@@ -48,31 +48,47 @@ fn draw_main_area(frame: &mut Frame, area: Rect, state: &GameState) {
 fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
     let zoom = state.zoom_level as usize;
 
-    // Calculate visible area dimensions (in map tiles)
     let visible_width = ((area.width as usize).saturating_sub(2) / zoom).min(state.map.width);
     let visible_height = ((area.height as usize).saturating_sub(2) / zoom).min(state.map.height);
 
-    // Calculate start position based on camera
     let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));
     let start_y = (state.camera_y as usize).min(state.map.height.saturating_sub(visible_height));
 
-    // Build the visible portion of the map with zoom
     let map_lines: Vec<Line> = state.map.tiles
         .iter()
         .skip(start_y)
         .take(visible_height)
         .flat_map(|row| {
-            // For each row, create zoom_level lines
-            (0..zoom).map(move |_| {
+            (0..zoom).map(move |line_idx| {
                 let spans: Vec<Span> = row
                     .iter()
                     .skip(start_x)
                     .take(visible_width)
                     .flat_map(|terrain| {
-                        let (color, symbol) = terrain.to_style();
-                        let style = Style::default().fg(color).bg(color);
-                        // Repeat the symbol zoom_level times horizontally
-                        (0..zoom).map(move |_| Span::styled(symbol, style))
+                        use crate::game::map::TileDisplay;
+                        match terrain.to_style(state.zoom_level) {
+                            TileDisplay::Single(symbol, color) => {
+                                let style = Style::default().fg(color).bg(color);
+                                (0..zoom).map(move |_| Span::styled(symbol, style)).collect::<Vec<_>>()
+                            }
+                            TileDisplay::Multi(grid) => {
+                                if line_idx < grid.len() {
+                                    grid[line_idx]
+                                        .iter()
+                                        .map(|(symbol, color)| {
+                                            // Appliquer le fond plaine (70) pour les maisons
+                                            Span::styled(*symbol, Style::default()
+                                                .fg(*color)
+                                                .bg(Color::Indexed(70)))
+                                        })
+                                        .collect::<Vec<_>>()
+                                } else {
+                                    vec![Span::styled("▄", Style::default()
+                                        .fg(Color::Indexed(70))
+                                        .bg(Color::Indexed(70))); zoom]
+                                }
+                            }
+                        }
                     })
                     .collect();
                 Line::from(spans)
@@ -93,7 +109,6 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState) {
         .block(Block::default().title(title).borders(Borders::ALL));
     frame.render_widget(map_widget, area);
 }
-
 
 fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState) {
     let total_population: i32 = state.cities.iter().map(|city| city.population).sum();

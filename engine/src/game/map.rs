@@ -10,17 +10,61 @@ pub enum Terrain {
     Mountain,
 }
 
+pub enum TileDisplay {
+    Single(&'static str, ratatui::style::Color),
+    Multi(Vec<Vec<(&'static str, ratatui::style::Color)>>),
+}
+
 impl Terrain {
-    pub fn to_style(&self) -> (ratatui::style::Color, &'static str) {
+    pub fn to_style(&self, zoom_level: u8) -> TileDisplay {
         match self {
-            Terrain::Water => (ratatui::style::Color::Indexed(26), "▄"), // Mid-blue
-            Terrain::Plains => (ratatui::style::Color::Indexed(70), "▄"), // Grass green
-            Terrain::Desert => (ratatui::style::Color::Indexed(220), "▄"), // Sand yellow
-            Terrain::City => (ratatui::style::Color::Indexed(124), "▄"), // Dark red
-            Terrain::Mountain => (ratatui::style::Color::Indexed(250), "▄"), // Light gray
+            Terrain::Water => TileDisplay::Single("▄", ratatui::style::Color::Indexed(26)),
+            Terrain::Plains => TileDisplay::Single("▄", ratatui::style::Color::Indexed(70)),
+            Terrain::Desert => TileDisplay::Single("▄", ratatui::style::Color::Indexed(220)),
+            Terrain::Mountain => TileDisplay::Single("▄", ratatui::style::Color::Indexed(250)),
+            Terrain::City => {
+                match zoom_level {
+                    1 => TileDisplay::Single("▄", ratatui::style::Color::Indexed(124)),
+                    2 => {
+                        // 2x2 house avec toit triangulaire
+                        TileDisplay::Multi(vec![
+                            vec![
+                                ("◢", ratatui::style::Color::Indexed(196)), // toit gauche
+                                ("◣", ratatui::style::Color::Indexed(196)), // toit droit
+                            ],
+                            vec![
+                                ("█", ratatui::style::Color::Indexed(124)), // mur gauche
+                                ("█", ratatui::style::Color::Indexed(124)), // mur droit
+                            ],
+                        ])
+                    }
+                    3 => {
+                        // 3x3 house avec toit plus élaboré
+                        TileDisplay::Multi(vec![
+                            vec![
+                                ("◢", ratatui::style::Color::Indexed(196)), // toit gauche
+                                ("█", ratatui::style::Color::Indexed(196)), // toit pointe
+                                ("◣", ratatui::style::Color::Indexed(196)), // toit droit
+                            ],
+                            vec![
+                                ("█", ratatui::style::Color::Indexed(124)), // mur gauche
+                                ("▓", ratatui::style::Color::Indexed(202)), // cheminée
+                                ("█", ratatui::style::Color::Indexed(124)), // mur droit
+                            ],
+                            vec![
+                                ("█", ratatui::style::Color::Indexed(124)), // mur gauche
+                                ("▒", ratatui::style::Color::Indexed(220)), // porte
+                                ("█", ratatui::style::Color::Indexed(124)), // mur droit
+                            ],
+                        ])
+                    }
+                    _ => TileDisplay::Single("▄", ratatui::style::Color::Indexed(124)),
+                }
+            }
         }
     }
 }
+
 
 pub struct GameMap {
     pub tiles: Vec<Vec<Terrain>>,
