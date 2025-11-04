@@ -3,22 +3,25 @@ mod game;
 
 use anyhow::Context;
 use anyhow::Result;
-use clap::Parser;
 use crossterm::{
-    event::{self, Event, KeyCode, KeyModifiers},
     execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    terminal::{enable_raw_mode, EnterAlternateScreen},
+    event::{self, Event, KeyCode, KeyModifiers},
 };
-use ratatui::{backend::CrosstermBackend, prelude::*};
+use ratatui::{
+    prelude::*,
+    backend::CrosstermBackend,
+};
 use std::io;
-
-use crate::game::utils::{cleanup_term, draw_color_test};
+use clap::Parser;
+use crate::game::ui::{cleanup_term, draw_color_test_256, draw_color_test_rgb};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(long, default_value_t = false)]
-    test_color: bool,
+    /// Run a color test screen instead of the game
+    #[arg(long, default_value = "", value_parser = ["", "256", "rgb"])]
+    test_color: String,
 }
 
 fn main() -> Result<()> {
@@ -32,20 +35,23 @@ fn main() -> Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    // If test_color was requested, show the color test and exit without launching the game
-    if matches.test_color {
-        draw_color_test(&mut terminal)?;
-        // Wait for any key
-        loop {
-            if event::poll(std::time::Duration::from_millis(100))? {
-                if let Event::Key(_) = event::read()? {
-                    break;
-                }
-            }
+    // If test_color was requested, show the color test and exit on any key press
+    match matches.test_color.as_str() {
+        "256" => {
+            draw_color_test_256(&mut terminal)?;
+            // Wait for any key press
+            event::read()?;
+            cleanup_term(&mut terminal)?;
+            return Ok(());
         }
-        // Cleanup and exit
-        cleanup_term(&mut terminal)?;
-        return Ok(());
+        "rgb" => {
+            draw_color_test_rgb(&mut terminal)?;
+            // Wait for any key press
+            event::read()?;
+            cleanup_term(&mut terminal)?;
+            return Ok(());
+        }
+        _ => {}
     }
 
     // Create a game instance

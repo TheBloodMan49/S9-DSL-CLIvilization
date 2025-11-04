@@ -13,11 +13,11 @@ pub enum Terrain {
 impl Terrain {
     pub fn to_style(&self) -> (ratatui::style::Color, &'static str) {
         match self {
-            Terrain::Water => (ratatui::style::Color::Blue, "▄"),
-            Terrain::Plains => (ratatui::style::Color::Green, "▄"),
-            Terrain::Desert => (ratatui::style::Color::Yellow, "▄"),
-            Terrain::City => (ratatui::style::Color::Red, "▄"),
-            Terrain::Mountain => (ratatui::style::Color::Gray, "▄"),
+            Terrain::Water => (ratatui::style::Color::Indexed(26), "▄"), // Mid-blue
+            Terrain::Plains => (ratatui::style::Color::Indexed(70), "▄"), // Grass green
+            Terrain::Desert => (ratatui::style::Color::Indexed(220), "▄"), // Sand yellow
+            Terrain::City => (ratatui::style::Color::Indexed(124), "▄"), // Dark red
+            Terrain::Mountain => (ratatui::style::Color::Indexed(250), "▄"), // Light gray
         }
     }
 }
@@ -31,7 +31,7 @@ pub struct GameMap {
 
 impl GameMap {
     pub fn new(seed: String) -> Self {
-        let width = 80;
+        let width = 160;
         let height = 40;
         let mut tiles = vec![vec![Terrain::Water; width]; height];
 

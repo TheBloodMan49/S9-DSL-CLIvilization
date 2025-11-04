@@ -45,6 +45,11 @@ impl Game {
                         self.state.toggle_seed_edit();
                         self.ui_state = UiState::EditingSeed;
                     }
+                    // Pick random seed
+                    KeyCode::Char('r') => {
+                        self.state.map = map::GameMap::new_random();
+                        self.state.seed_input = self.state.map.seed.clone();
+                    }
                     KeyCode::Char('v') | KeyCode::Char('V') => {
                         self.state.toggle_camera_mode();
                         self.ui_state = UiState::CameraMode;
