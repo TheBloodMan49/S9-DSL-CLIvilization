@@ -55,7 +55,7 @@ UnitInstanceArray:
 ;
 
 UnitInstance:
-    '{' 'id_units' '=' id_units=INT '}'
+    '{' 'id_units' '=' id_units=Value '}'
 ;
 
 Game:

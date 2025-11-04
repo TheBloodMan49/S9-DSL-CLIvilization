@@ -1,11 +1,8 @@
-// ...existing code...
 import { beforeAll, describe, it, expect } from "vitest";
 import { createClIvilizationServices } from "../src/clivilization-module.js";
 import { parseHelper } from "langium/test";
 import { Model } from "../src/index.js";
 import { EmptyFileSystem } from "langium";
-import * as fs from "fs/promises";
-import * as path from "path";
 
 let services: ReturnType<typeof createClIvilizationServices>;
 let parse: ReturnType<typeof parseHelper<Model>>;
@@ -23,7 +20,7 @@ x = 10
 y = 8
 
 [cities]
-"CityA" {
+CityA {
     x = 1
     y = 2
     color = #ff0000
@@ -31,9 +28,9 @@ y = 8
     player_type = PLAYER
     civilization = "Rome"
     nb_slots_buildings = 2
-    starting_buildings = [ { id_building = "barracks" level = 1 } ]
+    starting_buildings = [ { id_building = barracks level = 1 } ]
     nb_slots_units = 1
-    starting_units = [ { id_units = 5 } ]
+    starting_units = [ { id_units = infantry } ]
 }
 
 [game]
@@ -45,7 +42,7 @@ nb_turns = 50
 resources_spent = 1000
 
 [buildings]
-"barracks" {
+barracks {
     cost = 100
     build_time = 2
     slots = 1
@@ -54,7 +51,7 @@ resources_spent = 1000
 }
 
 [units]
-"infantry" { attack = 5 }
+infantry { attack = 5 }
 `;
 
         const result = await parse(input);

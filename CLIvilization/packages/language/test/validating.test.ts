@@ -2,12 +2,11 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { createClIvilizationServices } from "../src/clivilization-module.js";
 import { parseHelper } from "langium/test";
 import { Model } from "../src/index.js";
-import { EmptyFileSystem, LangiumDocument } from "langium";
+import { EmptyFileSystem } from "langium";
 
 
 let services: ReturnType<typeof createClIvilizationServices>;
 let parse:    ReturnType<typeof parseHelper<Model>>;
-let document: LangiumDocument<Model> | undefined;
 
 beforeAll(async () => {
     services = createClIvilizationServices(EmptyFileSystem);
@@ -156,7 +155,7 @@ soldier {
     it('no validation errors when starting unit id matches a unit name (numeric name)', async () => {
         const input = `
 [units]
-"1" {
+aaa {
     attack = 1
 }
 
@@ -171,7 +170,7 @@ city1 {
     nb_slots_buildings = 0
     starting_buildings = []
     nb_slots_units = 1
-    starting_units = [ { id_units = 1 } ]
+    starting_units = [ { id_units = aaa } ]
 }
         `;
         const res = await parse(input);
@@ -194,7 +193,7 @@ city1 {
     nb_slots_buildings = 0
     starting_buildings = []
     nb_slots_units = 1
-    starting_units = [ { id_units = 42 } ]
+    starting_units = [ { id_units = aaa } ]
 }
         `;
         const res = await parse(input);

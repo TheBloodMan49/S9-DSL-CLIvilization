@@ -1,4 +1,3 @@
-// ...existing code...
 import { LangiumDocument, EmptyFileSystem } from "langium";
 import { parseHelper, clearDocuments } from "langium/test";
 import { afterEach, beforeAll, describe, it, expect } from "vitest";
@@ -58,7 +57,7 @@ city1 {
     nb_slots_buildings = 2
     starting_buildings = [ { id_building = Farm level = 1 } ]
     nb_slots_units = 2
-    starting_units = [ { id_units = 1 } ]
+    starting_units = [ { id_units = Worker } ]
 }
         `.trim();
 

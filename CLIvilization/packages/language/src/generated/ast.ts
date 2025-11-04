@@ -363,7 +363,7 @@ export function isUnitDefArray(item: unknown): item is UnitDefArray {
 export interface UnitInstance extends langium.AstNode {
     readonly $container: UnitInstanceArray;
     readonly $type: 'UnitInstance';
-    id_units: number;
+    id_units: Value;
 }
 
 export const UnitInstance = {
