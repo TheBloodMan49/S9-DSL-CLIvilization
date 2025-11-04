@@ -1,3 +1,4 @@
+// Example configuration file with starting buildings and units
 [size]
 x=20
 y=20
@@ -13,12 +14,10 @@ Rome {
     starting_buildings=[
         { id_building=caserne level=1 }
     ]
-    blacklist_buildings=[]
     nb_slots_units=3
     starting_units=[
         { id_units=légionnaire nb_units=1 }
     ]
-    blacklist_units=[]
 }
 Carthage {
     x=15
@@ -30,12 +29,10 @@ Carthage {
     starting_buildings=[
         { id_building=chantier level=0 }
     ]
-    whitelist_buildings=[ caserne ]
     nb_slots_units=2
     starting_units=[
         { id_units=archer nb_units=1 }
     ]
-    whitelist_units=[]
 }
 
 [game]

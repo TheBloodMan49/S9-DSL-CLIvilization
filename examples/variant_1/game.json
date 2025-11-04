@@ -1,111 +1,79 @@
 {
   "sections": [
     {
-      "x": 10,
-      "y": 10
+      "x": 20,
+      "y": 20
     },
     {
       "cities": [
         {
-          "name": "Rome",
-          "x": 1,
-          "y": 1,
-          "color": "#000000",
-          "startingResources": 10,
+          "name": "Demacia",
+          "x": 5,
+          "y": 4,
+          "color": "#FFCC00",
+          "startingResources": 15,
           "playerType": "PLAYER",
-          "civilization": "Test",
           "nbSlotsBuildings": 2,
           "buildings": {
-            "elements": [
-              {
-                "id_building": "caserne",
-                "level": 0
-              }
-            ]
+            "elements": []
           },
-          "blacklist_buildings": {
-            "values": []
-          },
-          "nbSlotsUnits": 2,
+          "nbSlotsUnits": 6,
           "units": {
-            "units": [
-              {
-                "id_units": "légionnaire"
-              }
-            ]
-          },
-          "blacklist_units": {
-            "values": []
+            "units": []
           }
         },
         {
-          "name": "Athene",
-          "x": 1,
-          "y": 1,
-          "color": "#000000",
-          "startingResources": 10,
+          "name": "Noxus",
+          "x": 15,
+          "y": 5,
+          "color": "#CC0000",
+          "startingResources": 12,
           "playerType": "AI",
-          "civilization": "Test",
           "nbSlotsBuildings": 2,
           "buildings": {
-            "elements": [
-              {
-                "id_building": "caserne",
-                "level": 0
-              }
-            ]
+            "elements": []
           },
-          "whitelist_buildings": {
-            "values": []
-          },
-          "nbSlotsUnits": 2,
+          "nbSlotsUnits": 6,
           "units": {
-            "units": [
-              {
-                "id_units": "légionnaire2"
-              }
-            ]
-          },
-          "whitelist_units": {
-            "values": []
+            "units": []
           }
         }
       ]
     },
     {
-      "currentTurn": 0,
-      "uiColor": "#FFFFFF"
+      "currentTurn": 2,
+      "uiColor": "#FF00FF"
     },
     {
-      "nbTurns": 100,
+      "nbTurns": 120,
       "resourcesSpent": 1000
     },
     {
       "buildings": [
         {
-          "name": "caserne",
-          "cost": 2,
-          "buildTime": 3,
+          "name": "tour",
+          "cost": 3,
+          "buildTime": 2,
           "slots": 1,
           "production": {
             "prodType": "unit",
-            "prodUnitId": 2,
+            "prodUnitId": "mele",
             "amount": 1,
             "time": 2,
-            "cost": 3
+            "cost": 2
           },
           "prerequisites": {
             "prereqs": []
           }
         },
         {
-          "name": "caserne2",
-          "cost": 2,
+          "name": "inhibiteur",
+          "cost": 4,
           "buildTime": 3,
           "slots": 1,
           "production": {
             "prodType": "unit",
-            "prodUnitId": 2,
+            "prodUnitId": "casteur",
             "amount": 1,
             "time": 2,
             "cost": 3
@@ -119,12 +87,12 @@
     {
       "units": [
         {
-          "name": "légionnaire",
+          "name": "mele",
           "attack": 1
         },
         {
-          "name": "légionnaire2",
-          "attack": 1
+          "name": "casteur",
+          "attack": 2
         }
       ]
     }

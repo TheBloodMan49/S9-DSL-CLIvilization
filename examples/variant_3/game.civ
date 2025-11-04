@@ -1,3 +1,4 @@
+// Example configuration file for a game variant with whitelist and blacklist
 [size]
 x=12
 y=12
@@ -10,9 +11,9 @@ Oslo {
     starting_resources=12
     player_type=PLAYER
     nb_slots_buildings=2
-    starting_buildings=[ { id_building=dock level=0 } ]
+    starting_buildings=[]
     nb_slots_units=3
-    starting_units=[ { id_units=berserker nb_units=2 } ]
+    starting_units=[]
     blacklist_units=[ archer ]
 }
 Stockholm {
@@ -22,10 +23,10 @@ Stockholm {
     starting_resources=10
     player_type=AI
     nb_slots_buildings=1
-    starting_buildings=[ { id_building=forge level=0 } ]
+    starting_buildings=[]
+    whitelist_buildings=[ forge, dock]
     nb_slots_units=2
-    starting_units=[ { id_units=archer nb_units=1 } ]
-    whitelist_units=[]
+    starting_units=[]
 }
 
 [game]

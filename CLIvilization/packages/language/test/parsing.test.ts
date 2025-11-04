@@ -15,10 +15,6 @@ beforeAll(async () => {
 describe('Parsing tests', () => {
     it('parses a complete model without errors and produces expected AST values', async () => {
         const input = `
-[size]
-x = 10
-y = 8
-
 [cities]
 CityA {
     x = 1
@@ -33,8 +29,11 @@ CityA {
 }
 
 [game]
+map_x = 10
+map_y = 8
 current_turn = 3
 ui_color = #00ff00
+seed = "42"
 
 [victory_conditions]
 nb_turns = 50
@@ -59,13 +58,7 @@ infantry { attack = 5 }
         expect(result).toBeDefined();
         expect(result.parseResult?.value).toBeDefined();
         expect(Array.isArray((result.parseResult?.value as any).sections)).toBe(true);
-        expect((result.parseResult?.value as any).sections.length).toBeGreaterThanOrEqual(6);
-
-        // Check size section values
-        const size = (result.parseResult?.value as any).sections.find((s: any) => s && typeof s.x === 'number' && typeof s.y === 'number');
-        expect(size).toBeDefined();
-        expect(size.x).toBe(10);
-        expect(size.y).toBe(8);
+        expect((result.parseResult?.value as any).sections.length).toBeGreaterThanOrEqual(5);
 
         // Check cities section and first city fields
         const citiesSection = (result.parseResult?.value as any).sections.find((s: any) => Array.isArray(s.cities));
@@ -89,6 +82,15 @@ infantry { attack = 5 }
         expect(building.name).toBe("barracks");
         expect(building.cost).toBe(100);
         expect(building.production).toBeDefined();
+
+        // Check game section
+        const gameSection = (result.parseResult?.value as any).sections.find((s: any) => s.$type === "Game");
+        expect(gameSection).toBeDefined();
+        expect(gameSection.mapX).toBe(10);
+        expect(gameSection.mapY).toBe(8);
+        expect(gameSection.currentTurn).toBe(3);
+        expect(gameSection.uiColor).toBe("#00ff00");
+        expect(gameSection.seed).toBe("42");
 
         // Ensure there are no parse diagnostics (try common diagnostic fields)
         expect(result.parseResult.parserErrors).toHaveLength(0);

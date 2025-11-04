@@ -4,15 +4,9 @@ entry Model:
     sections+=Section* ;
 
 Section:
-    Size | Cities | Game | VictoryConditions | BuildingDefArray | UnitDefArray
+    Cities | Game | VictoryConditions | BuildingDefArray | UnitDefArray
 ;
 
-Size:
-    '[size]'
-    'x' '=' x=INT 
-    'y' '=' y=INT
-    
-;
 
 Cities:
     '[cities]' cities+=City (cities+=City)*;
@@ -62,8 +56,11 @@ UnitInstance:
 
 Game:
     '[game]'
+    'map_x' '=' mapX=INT
+    'map_y' '=' mapY=INT
     'current_turn' '=' currentTurn=INT
     'ui_color' '=' uiColor=COLOR
+    'seed' '=' seed=Value
 ;
 
 VictoryConditions:

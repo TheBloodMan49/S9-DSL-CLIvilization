@@ -27,7 +27,6 @@ export type ClIvilizationKeywordNames =
     | "[buildings]"
     | "[cities]"
     | "[game]"
-    | "[size]"
     | "[units]"
     | "[victory_conditions]"
     | "]"
@@ -42,6 +41,8 @@ export type ClIvilizationKeywordNames =
     | "id_building"
     | "id_units"
     | "level"
+    | "map_x"
+    | "map_y"
     | "nb_slots_buildings"
     | "nb_slots_units"
     | "nb_turns"
@@ -51,6 +52,7 @@ export type ClIvilizationKeywordNames =
     | "production"
     | "resources_spent"
     | "ressource"
+    | "seed"
     | "slots"
     | "starting_buildings"
     | "starting_resources"
@@ -200,12 +202,18 @@ export interface Game extends langium.AstNode {
     readonly $container: Model;
     readonly $type: 'Game';
     currentTurn: number;
+    mapX: number;
+    mapY: number;
+    seed: Value;
     uiColor: string;
 }
 
 export const Game = {
     $type: 'Game',
     currentTurn: 'currentTurn',
+    mapX: 'mapX',
+    mapY: 'mapY',
+    seed: 'seed',
     uiColor: 'uiColor'
 } as const;
 
@@ -306,7 +314,7 @@ export function isProductionType(item: unknown): item is ProductionType {
     return item === 'unit' || item === 'ressource';
 }
 
-export type Section = BuildingDefArray | Cities | Game | Size | UnitDefArray | VictoryConditions;
+export type Section = BuildingDefArray | Cities | Game | UnitDefArray | VictoryConditions;
 
 export const Section = {
     $type: 'Section'
@@ -314,23 +322,6 @@ export const Section = {
 
 export function isSection(item: unknown): item is Section {
     return reflection.isInstance(item, Section.$type);
-}
-
-export interface Size extends langium.AstNode {
-    readonly $container: Model;
-    readonly $type: 'Size';
-    x: number;
-    y: number;
-}
-
-export const Size = {
-    $type: 'Size',
-    x: 'x',
-    y: 'y'
-} as const;
-
-export function isSize(item: unknown): item is Size {
-    return reflection.isInstance(item, Size.$type);
 }
 
 export interface UnitDef extends langium.AstNode {
@@ -449,7 +440,6 @@ export type ClIvilizationAstType = {
     PrereqArray: PrereqArray
     Production: Production
     Section: Section
-    Size: Size
     UnitDef: UnitDef
     UnitDefArray: UnitDefArray
     UnitInstance: UnitInstance
@@ -580,6 +570,15 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
                 currentTurn: {
                     name: Game.currentTurn
                 },
+                mapX: {
+                    name: Game.mapX
+                },
+                mapY: {
+                    name: Game.mapY
+                },
+                seed: {
+                    name: Game.seed
+                },
                 uiColor: {
                     name: Game.uiColor
                 }
@@ -651,18 +650,6 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
             properties: {
             },
             superTypes: []
-        },
-        Size: {
-            name: Size.$type,
-            properties: {
-                x: {
-                    name: Size.x
-                },
-                y: {
-                    name: Size.y
-                }
-            },
-            superTypes: [Section.$type]
         },
         UnitDef: {
             name: UnitDef.$type,
