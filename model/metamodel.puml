@@ -1,0 +1,183 @@
+@startuml
+title CLIvilization DSL Structure (with cross-references)
+
+' ==============================
+' Root Entity
+' ==============================
+class Model {
+    +sections : Section[*]
+}
+
+interface Section
+Section <|-- Cities
+Section <|-- Game
+Section <|-- VictoryConditions
+Section <|-- BuildingDefArray
+Section <|-- UnitDefArray
+
+' ==============================
+' Cities and related entities
+' ==============================
+class Cities {
+    +cities : City[*]
+}
+
+class City {
+    +name : Value
+    +x : int
+    +y : int
+    +color : COLOR
+    +startingResources : int
+    +playerType : PlayerType
+    +nbSlotsBuildings : int
+    +buildings : BuildingInstanceArray
+    +blacklist_buildings : ValueArray?
+    +whitelist_buildings : ValueArray?
+    +nbSlotsUnits : int
+    +units : UnitInstanceArray
+    +blacklist_units : ValueArray?
+    +whitelist_units : ValueArray?
+}
+
+enum PlayerType {
+    PLAYER
+    AI
+}
+
+class BuildingInstanceArray {
+    +elements : BuildingInstance[*]
+}
+
+class BuildingInstance {
+    +id_building : Value <<ref BuildingDef>>
+    +level : int
+}
+
+class UnitInstanceArray {
+    +units : UnitInstance[*]
+}
+
+class UnitInstance {
+    +id_units : Value <<ref UnitDef>>
+    +nb_units : int
+}
+
+class BuildingArray {
+    +values : Value[*]
+}
+
+class UnitArray {
+    +values : Value[*]
+}
+
+Cities "1" *-- "many" City
+City *-- BuildingInstanceArray
+City *-- UnitInstanceArray
+City *-- BuildingArray : blacklist_buildings
+City *-- BuildingArray : whitelist_buildings
+City *-- UnitArray : blacklist_units
+City *-- UnitArray : whitelist_units
+
+' ==============================
+' Game section
+' ==============================
+class Game {
+    +mapX : int
+    +mapY : int
+    +currentTurn : int
+    +uiColor : COLOR
+    +seed : Value?
+}
+
+' ==============================
+' Victory Conditions
+' ==============================
+class VictoryConditions {
+    +nbTurns : int
+    +resourcesSpent : int
+}
+
+' ==============================
+' Building definitions
+' ==============================
+class BuildingDefArray {
+    +buildings : BuildingDef[*]
+}
+
+class BuildingDef {
+    +name : Value
+    +cost : int
+    +buildTime : int
+    +slots : int
+    +production : Production
+    +prerequisites : PrereqArray
+}
+
+class Production {
+    +prodType : ProductionType
+    +prodUnitId : Value? <<ref UnitDef>>
+    +amount : int
+    +time : int
+    +cost : int
+}
+
+enum ProductionType {
+    unit
+    ressource
+}
+
+class PrereqArray {
+    +prereqs : Prereq[*]
+}
+
+class Prereq {
+    +id_building : Value <<ref BuildingDef>>
+}
+
+BuildingDefArray *-- BuildingDef
+BuildingDef *-- Production
+BuildingDef *-- PrereqArray
+PrereqArray *-- Prereq
+
+' ==============================
+' Unit definitions
+' ==============================
+class UnitDefArray {
+    +units : UnitDef[*]
+}
+
+class UnitDef {
+    +name : Value
+    +attack : int
+}
+
+UnitDefArray *-- UnitDef
+
+' ==============================
+' Primitive / terminal types
+' ==============================
+class Value {
+    <<string or identifier>>
+}
+class COLOR {
+    <<#RRGGBB>>
+}
+
+' ==============================
+' Cross-References
+' ==============================
+BuildingInstance ..> BuildingDef : «ref» id_building
+UnitInstance ..> UnitDef : «ref» id_units
+Production ..> UnitDef : «ref» prodUnitId
+Prereq ..> BuildingDef : «ref» id_building
+BuildingArray ..> BuildingDef : «ref»? (possible whitelist/blacklist)
+UnitArray ..> UnitDef : «ref»? (possible whitelist/blacklist)
+
+' ==============================
+' Relationships summary
+' ==============================
+Model *-- Section
+Cities *-- City
+BuildingInstanceArray *-- BuildingInstance
+UnitInstanceArray *-- UnitInstance
+@enduml
