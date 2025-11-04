@@ -5,131 +5,51 @@ include!(concat!(env!("OUT_DIR"), "/ast.rs"));
 mod tests {
     use super::*;
 
-    const sample: &str = r##"{
-  "sections": [
-    {
-      "x": 10,
-      "y": 10
-    },
-    {
-      "cities": [
-        {
-          "name": "Rome",
-          "x": 1,
-          "y": 1,
-          "color": "#000000",
-          "startingResources": 10,
-          "playerType": "PLAYER",
-          "civilization": "Test",
-          "nbSlotsBuildings": 2,
-          "buildings": {
-            "elements": [
-              {
-                "id_building": 1,
-                "level": 0
-              }
-            ]
-          },
-          "blacklist_buildings": {
-            "values": []
-          },
-          "nbSlotsUnits": 2,
-          "units": {
-            "units": [
-              {
-                "id_units": 2
-              }
-            ]
-          },
-          "blacklist_units": {
-            "values": []
-          }
-        },
-        {
-          "name": "Athene",
-          "x": 1,
-          "y": 1,
-          "color": "#000000",
-          "startingResources": 10
-        },
-        {
-          "name": "Test"
-        }
-      ]
-    },
-    {
-      "currentTurn": 0,
-      "uiColor": "#FFFFFF"
-    },
-    {
-      "nbTurns": 100,
-      "resourcesSpent": 1000
-    },
-    {
-      "buildings": [
-        {
-          "name": "caserne",
-          "cost": 2,
-          "buildTime": 3,
-          "slots": 1,
-          "production": {
-            "prodType": "unit",
-            "prodUnitId": 2,
-            "amount": 1,
-            "time": 2,
-            "cost": 3
-          },
-          "prerequisites": {
-            "prereqs": []
-          }
-        },
-        {
-          "name": "caserne2",
-          "cost": 2,
-          "buildTime": 3,
-          "slots": 1,
-          "production": {
-            "prodType": "unit",
-            "prodUnitId": 2,
-            "amount": 1,
-            "time": 2,
-            "cost": 3
-          },
-          "prerequisites": {
-            "prereqs": []
-          }
-        }
-      ]
-    },
-    {
-      "units": [
-        {
-          "name": "légionnaire",
-          "attack": 1
-        },
-        {
-          "name": "légionnaire",
-          "attack": 1
-        }
-      ]
-    }
-  ]
-}"##;
+    const sample: &str = include_str!("../../examples/variant_1/game.json");
 
     #[test]
     fn test_sample() {
         println!(
             "{}",
-            match serde_json::to_string(&Model {
+            match serde_json::to_string_pretty(&Model {
                 sections: vec![Section::Game(Game {
                     currentTurn: 0,
                     uiColor: "#FFFFFF".to_string()
+                }),
+                Section::Cities(Cities {
+                    cities: vec![City {
+                        blacklist_buildings: None,
+                        blacklist_units: None,
+                        buildings: BuildingInstanceArray {
+                            elements: vec![BuildingInstance {
+                                id_building: "caserne".to_string(),
+                                level: 0,
+                            }],
+                        },
+                        civilization: "Test".to_string(),
+                        color: "#000000".to_string(),
+                        name: "Rome".to_string(),
+                        nbSlotsBuildings: 2,
+                        nbSlotsUnits: 2,
+                        playerType: PlayerType::AI,
+                        startingResources: 0,
+                        units: UnitInstanceArray {
+                            units: vec![UnitInstance {
+                                id_units: "légionnaire".to_string(),
+                            }],
+                        },
+                        whitelist_buildings: None,
+                        whitelist_units: None,
+                        x: 0,
+                        y: 0,
+                    }],
                 })]
             }) {
                 Ok(json) => json,
                 Err(e) => panic!("{}", e),
             }
         );
+
         println!(
             "{:?}",
             match serde_json::from_str::<Model>(sample) {

@@ -1,0 +1,132 @@
+{
+  "sections": [
+    {
+      "x": 10,
+      "y": 10
+    },
+    {
+      "cities": [
+        {
+          "name": "Rome",
+          "x": 1,
+          "y": 1,
+          "color": "#000000",
+          "startingResources": 10,
+          "playerType": "PLAYER",
+          "civilization": "Test",
+          "nbSlotsBuildings": 2,
+          "buildings": {
+            "elements": [
+              {
+                "id_building": "caserne",
+                "level": 0
+              }
+            ]
+          },
+          "blacklist_buildings": {
+            "values": []
+          },
+          "nbSlotsUnits": 2,
+          "units": {
+            "units": [
+              {
+                "id_units": "légionnaire"
+              }
+            ]
+          },
+          "blacklist_units": {
+            "values": []
+          }
+        },
+        {
+          "name": "Athene",
+          "x": 1,
+          "y": 1,
+          "color": "#000000",
+          "startingResources": 10,
+          "playerType": "AI",
+          "civilization": "Test",
+          "nbSlotsBuildings": 2,
+          "buildings": {
+            "elements": [
+              {
+                "id_building": "caserne",
+                "level": 0
+              }
+            ]
+          },
+          "whitelist_buildings": {
+            "values": []
+          },
+          "nbSlotsUnits": 2,
+          "units": {
+            "units": [
+              {
+                "id_units": "légionnaire2"
+              }
+            ]
+          },
+          "whitelist_units": {
+            "values": []
+          }
+        }
+      ]
+    },
+    {
+      "currentTurn": 0,
+      "uiColor": "#FFFFFF"
+    },
+    {
+      "nbTurns": 100,
+      "resourcesSpent": 1000
+    },
+    {
+      "buildings": [
+        {
+          "name": "caserne",
+          "cost": 2,
+          "buildTime": 3,
+          "slots": 1,
+          "production": {
+            "prodType": "unit",
+            "prodUnitId": 2,
+            "amount": 1,
+            "time": 2,
+            "cost": 3
+          },
+          "prerequisites": {
+            "prereqs": []
+          }
+        },
+        {
+          "name": "caserne2",
+          "cost": 2,
+          "buildTime": 3,
+          "slots": 1,
+          "production": {
+            "prodType": "unit",
+            "prodUnitId": 2,
+            "amount": 1,
+            "time": 2,
+            "cost": 3
+          },
+          "prerequisites": {
+            "prereqs": []
+          }
+        }
+      ]
+    },
+    {
+      "units": [
+        {
+          "name": "légionnaire",
+          "attack": 1
+        },
+        {
+          "name": "légionnaire2",
+          "attack": 1
+        }
+      ]
+    }
+  ]
+}
