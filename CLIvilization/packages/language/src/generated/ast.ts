@@ -204,7 +204,7 @@ export interface Game extends langium.AstNode {
     currentTurn: number;
     mapX: number;
     mapY: number;
-    seed: Value;
+    seed?: Value;
     uiColor: string;
 }
 

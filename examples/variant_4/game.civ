@@ -1,8 +1,4 @@
 // Example configuration file for a game variant with no units buyable (should be quickly winnable)
-[size]
-x=25
-y=25
-
 [cities]
 Thèbes {
     x=4
@@ -30,8 +26,11 @@ Memphis {
 }
 
 [game]
+map_x=15
+map_y=15
 current_turn=5
 ui_color=#FFFF99
+seed=Cleopatra
 
 [victory_conditions]
 nb_turns=200

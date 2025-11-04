@@ -788,24 +788,30 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             }
           },
           {
-            "$type": "Keyword",
-            "value": "seed"
-          },
-          {
-            "$type": "Keyword",
-            "value": "="
-          },
-          {
-            "$type": "Assignment",
-            "feature": "seed",
-            "operator": "=",
-            "terminal": {
-              "$type": "RuleCall",
-              "rule": {
-                "$ref": "#/rules@19"
+            "$type": "Group",
+            "elements": [
+              {
+                "$type": "Keyword",
+                "value": "seed"
               },
-              "arguments": []
-            }
+              {
+                "$type": "Keyword",
+                "value": "="
+              },
+              {
+                "$type": "Assignment",
+                "feature": "seed",
+                "operator": "=",
+                "terminal": {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@19"
+                  },
+                  "arguments": []
+                }
+              }
+            ],
+            "cardinality": "?"
           }
         ]
       },

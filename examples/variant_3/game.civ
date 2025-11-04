@@ -1,8 +1,4 @@
 // Example configuration file for a game variant with whitelist and blacklist
-[size]
-x=12
-y=12
-
 [cities]
 Oslo {
     x=2
@@ -30,8 +26,11 @@ Stockholm {
 }
 
 [game]
+map_x=15
+map_y=10
 current_turn=1
 ui_color=#99CCFF
+seed=Nordic
 
 [victory_conditions]
 nb_turns=120

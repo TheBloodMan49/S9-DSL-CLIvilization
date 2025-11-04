@@ -1,8 +1,4 @@
 // Default example file for a simple game configuration
-[size]
-x=20
-y=20
-
 [cities]
 Demacia {
     x=5
@@ -28,8 +24,11 @@ Noxus {
 }
 
 [game]
+map_x=20
+map_y=10
 current_turn=2
 ui_color=#FF00FF
+seed=Swain
 
 [victory_conditions]
 nb_turns=120

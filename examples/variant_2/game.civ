@@ -1,8 +1,4 @@
 // Example configuration file with starting buildings and units
-[size]
-x=20
-y=20
-
 [cities]
 Rome {
     x=2
@@ -36,8 +32,11 @@ Carthage {
 }
 
 [game]
+map_x=20
+map_y=15
 current_turn=0
 ui_color=#EEEEEE
+seed=vds
 
 [victory_conditions]
 nb_turns=150

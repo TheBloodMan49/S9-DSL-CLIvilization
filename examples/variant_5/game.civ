@@ -1,8 +1,4 @@
 // Example configuration file with starting buildings and units
-[size]
-x=15
-y=8
-
 [cities]
 Lyria {
     x=1
@@ -32,8 +28,11 @@ Poseidia {
 }
 
 [game]
+map_x=15
+map_y=10
 current_turn=2
 ui_color=#00FFFF
+seed=Oceanus
 
 [victory_conditions]
 nb_turns=180

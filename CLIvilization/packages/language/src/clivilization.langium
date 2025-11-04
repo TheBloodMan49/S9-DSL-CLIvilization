@@ -60,7 +60,7 @@ Game:
     'map_y' '=' mapY=INT
     'current_turn' '=' currentTurn=INT
     'ui_color' '=' uiColor=COLOR
-    'seed' '=' seed=Value
+    ('seed' '=' seed=Value)?
 ;
 
 VictoryConditions:
