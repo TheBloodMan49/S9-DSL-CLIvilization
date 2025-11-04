@@ -76,7 +76,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@17"
+              "$ref": "#/rules@18"
             },
             "arguments": []
           }
@@ -111,7 +111,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -131,7 +131,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -196,7 +196,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@19"
+                "$ref": "#/rules@20"
               },
               "arguments": []
             }
@@ -220,7 +220,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -240,7 +240,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -260,7 +260,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@20"
+                "$ref": "#/rules@21"
               },
               "arguments": []
             }
@@ -280,7 +280,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -307,26 +307,6 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Keyword",
-            "value": "civilization"
-          },
-          {
-            "$type": "Keyword",
-            "value": "="
-          },
-          {
-            "$type": "Assignment",
-            "feature": "civilization",
-            "operator": "=",
-            "terminal": {
-              "$type": "RuleCall",
-              "rule": {
-                "$ref": "#/rules@19"
-              },
-              "arguments": []
-            }
-          },
-          {
-            "$type": "Keyword",
             "value": "nb_slots_buildings"
           },
           {
@@ -340,7 +320,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -383,7 +363,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@22"
+                    "$ref": "#/rules@24"
                   },
                   "arguments": []
                 }
@@ -409,7 +389,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@22"
+                    "$ref": "#/rules@24"
                   },
                   "arguments": []
                 }
@@ -432,7 +412,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -475,7 +455,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@22"
+                    "$ref": "#/rules@24"
                   },
                   "arguments": []
                 }
@@ -501,7 +481,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@22"
+                    "$ref": "#/rules@24"
                   },
                   "arguments": []
                 }
@@ -625,7 +605,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@19"
+                "$ref": "#/rules@20"
               },
               "arguments": []
             }
@@ -645,7 +625,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -745,7 +725,27 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@19"
+                "$ref": "#/rules@20"
+              },
+              "arguments": []
+            }
+          },
+          {
+            "$type": "Keyword",
+            "value": "nb_units"
+          },
+          {
+            "$type": "Keyword",
+            "value": "="
+          },
+          {
+            "$type": "Assignment",
+            "feature": "nb_units",
+            "operator": "=",
+            "terminal": {
+              "$type": "RuleCall",
+              "rule": {
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -785,7 +785,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -805,7 +805,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@20"
+                "$ref": "#/rules@21"
               },
               "arguments": []
             }
@@ -841,7 +841,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -861,7 +861,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -932,7 +932,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@19"
+                "$ref": "#/rules@20"
               },
               "arguments": []
             }
@@ -956,7 +956,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -976,7 +976,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -996,7 +996,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -1036,7 +1036,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@15"
+                "$ref": "#/rules@16"
               },
               "arguments": []
             }
@@ -1076,30 +1076,36 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@19"
+                "$ref": "#/rules@15"
               },
               "arguments": []
             }
           },
           {
-            "$type": "Keyword",
-            "value": "id_units"
-          },
-          {
-            "$type": "Keyword",
-            "value": "="
-          },
-          {
-            "$type": "Assignment",
-            "feature": "prodUnitId",
-            "operator": "=",
-            "terminal": {
-              "$type": "RuleCall",
-              "rule": {
-                "$ref": "#/rules@23"
+            "$type": "Group",
+            "elements": [
+              {
+                "$type": "Keyword",
+                "value": "id_units"
               },
-              "arguments": []
-            }
+              {
+                "$type": "Keyword",
+                "value": "="
+              },
+              {
+                "$type": "Assignment",
+                "feature": "prodUnitId",
+                "operator": "=",
+                "terminal": {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@20"
+                  },
+                  "arguments": []
+                }
+              }
+            ],
+            "cardinality": "?"
           },
           {
             "$type": "Keyword",
@@ -1116,7 +1122,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -1136,7 +1142,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -1156,7 +1162,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -1164,6 +1170,27 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           {
             "$type": "Keyword",
             "value": "}"
+          }
+        ]
+      },
+      "entry": false,
+      "fragment": false,
+      "parameters": []
+    },
+    {
+      "$type": "ParserRule",
+      "name": "ProductionType",
+      "dataType": "string",
+      "definition": {
+        "$type": "Alternatives",
+        "elements": [
+          {
+            "$type": "Keyword",
+            "value": "unit"
+          },
+          {
+            "$type": "Keyword",
+            "value": "ressource"
           }
         ]
       },
@@ -1191,7 +1218,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@16"
+                    "$ref": "#/rules@17"
                   },
                   "arguments": []
                 }
@@ -1210,7 +1237,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                     "terminal": {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@16"
+                        "$ref": "#/rules@17"
                       },
                       "arguments": []
                     }
@@ -1256,7 +1283,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@24"
+                "$ref": "#/rules@20"
               },
               "arguments": []
             }
@@ -1291,7 +1318,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@18"
+                    "$ref": "#/rules@19"
                   },
                   "arguments": []
                 }
@@ -1303,7 +1330,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@18"
+                    "$ref": "#/rules@19"
                   },
                   "arguments": []
                 },
@@ -1331,7 +1358,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@19"
+                "$ref": "#/rules@20"
               },
               "arguments": []
             }
@@ -1355,7 +1382,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@23"
+                "$ref": "#/rules@25"
               },
               "arguments": []
             }
@@ -1380,14 +1407,14 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@24"
+              "$ref": "#/rules@26"
             },
             "arguments": []
           },
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@21"
+              "$ref": "#/rules@22"
             },
             "arguments": []
           }
@@ -1584,7 +1611,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@23"
+                    "$ref": "#/rules@25"
                   },
                   "arguments": []
                 }
@@ -1603,7 +1630,67 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
                     "terminal": {
                       "$type": "RuleCall",
                       "rule": {
-                        "$ref": "#/rules@23"
+                        "$ref": "#/rules@25"
+                      },
+                      "arguments": []
+                    }
+                  }
+                ],
+                "cardinality": "*"
+              }
+            ],
+            "cardinality": "?"
+          },
+          {
+            "$type": "Keyword",
+            "value": "]"
+          }
+        ]
+      },
+      "entry": false,
+      "fragment": false,
+      "parameters": []
+    },
+    {
+      "$type": "ParserRule",
+      "name": "ValueArray",
+      "definition": {
+        "$type": "Group",
+        "elements": [
+          {
+            "$type": "Keyword",
+            "value": "["
+          },
+          {
+            "$type": "Group",
+            "elements": [
+              {
+                "$type": "Assignment",
+                "feature": "values",
+                "operator": "+=",
+                "terminal": {
+                  "$type": "RuleCall",
+                  "rule": {
+                    "$ref": "#/rules@20"
+                  },
+                  "arguments": []
+                }
+              },
+              {
+                "$type": "Group",
+                "elements": [
+                  {
+                    "$type": "Keyword",
+                    "value": ","
+                  },
+                  {
+                    "$type": "Assignment",
+                    "feature": "values",
+                    "operator": "+=",
+                    "terminal": {
+                      "$type": "RuleCall",
+                      "rule": {
+                        "$ref": "#/rules@20"
                       },
                       "arguments": []
                     }

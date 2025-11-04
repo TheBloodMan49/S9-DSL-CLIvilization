@@ -27,7 +27,7 @@ house {
     cost = 10
     build_time = 2
     slots = 1
-    production = { type = "none" id_units = 0 amount = 0 time = 0 cost = 0 }
+    production = { type = ressource amount = 2 time = 1 cost = 0 }
     prerequisites = []
 }
 
@@ -38,7 +38,6 @@ city1 {
     color = #ffffff
     starting_resources = 100
     player_type = PLAYER
-    civilization = "civ"
     nb_slots_buildings = 2
     starting_buildings = [ { id_building = house level = 1 } ]
     nb_slots_units = 0
@@ -59,7 +58,6 @@ city1 {
     color = #ffffff
     starting_resources = 100
     player_type = PLAYER
-    civilization = "civ"
     nb_slots_buildings = 2
     starting_buildings = [ { id_building = house level = 1 } ]
     nb_slots_units = 0
@@ -84,7 +82,6 @@ city1 {
     color = #ffffff
     starting_resources = 0
     player_type = PLAYER
-    civilization = "civ"
     nb_slots_buildings = 0
     starting_buildings = []
     nb_slots_units = 0
@@ -96,7 +93,6 @@ city1 {
     color = #000000
     starting_resources = 0
     player_type = PLAYER
-    civilization = "civ"
     nb_slots_buildings = 0
     starting_buildings = []
     nb_slots_units = 0
@@ -117,14 +113,14 @@ house {
     cost = 1
     build_time = 1
     slots = 1
-    production = { type = "none" id_units = 0 amount = 0 time = 0 cost = 0 }
+    production = { type = ressource amount = 1 time = 1 cost = 0 }
     prerequisites = []
 }
 house {
     cost = 2
     build_time = 2
     slots = 1
-    production = { type = "none" id_units = 0 amount = 0 time = 0 cost = 0 }
+    production = { type = ressource amount = 1 time = 1 cost = 0 }
     prerequisites = []
 }
         `;
@@ -166,7 +162,6 @@ city1 {
     color = #ffffff
     starting_resources = 0
     player_type = PLAYER
-    civilization = "civ"
     nb_slots_buildings = 0
     starting_buildings = []
     nb_slots_units = 1
@@ -189,7 +184,6 @@ city1 {
     color = #ffffff
     starting_resources = 0
     player_type = PLAYER
-    civilization = "civ"
     nb_slots_buildings = 0
     starting_buildings = []
     nb_slots_units = 1
@@ -201,6 +195,93 @@ city1 {
         const diagnostics = res!.diagnostics || [];
         const hasMsg = diagnostics.some(d => /not defined in \[units\] section/.test(d.message));
         expect(hasMsg).toBe(true);
+    });
+
+    it('reports error when a city has both whitelist_buildings and blacklist_buildings', async () => {
+        const input = `
+[cities]
+city1 {
+    x = 1
+    y = 1
+    color = #abcdef
+    starting_resources = 0
+    player_type = PLAYER
+    nb_slots_buildings = 0
+    starting_buildings = []
+    blacklist_buildings = [ forbidden_building ]
+    whitelist_buildings = [ allowed_building ]
+    nb_slots_units = 0
+    starting_units = []
+}
+        `;
+        const res = await parse(input);
+        expect(res).toBeDefined();
+        const diagnostics = res!.diagnostics || [];
+        const hasMsg = diagnostics.some(d => /cannot have both 'whitelist_buildings' and 'blacklist_buildings'/.test(d.message));
+        expect(hasMsg).toBe(true);
+    });
+
+    it('reports error when a city has both whitelist_units and blacklist_units', async () => {
+        const input = `
+[cities]
+city1 {
+    x = 1
+    y = 1
+    color = #123456
+    starting_resources = 0
+    player_type = PLAYER
+    nb_slots_buildings = 0
+    starting_buildings = []
+    nb_slots_units = 0
+    starting_units = []
+    blacklist_units = [ forbidden_unit ]
+    whitelist_units = [ allowed_unit ]
+}
+        `;
+        const res = await parse(input);
+        expect(res).toBeDefined();
+        const diagnostics = res!.diagnostics || [];
+        const hasMsg = diagnostics.some(d => /cannot have both 'whitelist_units' and 'blacklist_units'/.test(d.message));
+        expect(hasMsg).toBe(true);
+    });
+
+    it('no error when only whitelist or only blacklist is present', async () => {
+        const input = `
+[cities]
+city_whitelist {
+    x = 1
+    y = 1
+    color = #ffffff
+    starting_resources = 0
+    player_type = PLAYER
+    nb_slots_buildings = 0
+    starting_buildings = []
+    whitelist_buildings = [ allowed_building ]
+    nb_slots_units = 0
+    starting_units = []
+}
+
+city_blacklist {
+    x = 2
+    y = 2
+    color = #000000
+    starting_resources = 0
+    player_type = PLAYER
+    nb_slots_buildings = 0
+    starting_buildings = []
+    blacklist_units = [ forbidden_unit ]
+    nb_slots_units = 0
+    starting_units = []
+}
+        `;
+        const res = await parse(input);
+        expect(res).toBeDefined();
+        const diagnostics = res!.diagnostics || [];
+        const hasWhitelistBlacklistMsg = diagnostics.some(d =>
+            /cannot have both 'whitelist_buildings' and 'blacklist_buildings'/.test(d.message) ||
+            /cannot have both 'whitelist_units' and 'blacklist_units'/.test(d.message)
+        );
+        expect(hasWhitelistBlacklistMsg).toBe(false);
     });
 
 });

@@ -26,11 +26,10 @@ CityA {
     color = #ff0000
     starting_resources = 100
     player_type = PLAYER
-    civilization = "Rome"
     nb_slots_buildings = 2
     starting_buildings = [ { id_building = barracks level = 1 } ]
     nb_slots_units = 1
-    starting_units = [ { id_units = infantry } ]
+    starting_units = [ { id_units = infantry nb_units = 1 } ]
 }
 
 [game]
@@ -46,7 +45,7 @@ barracks {
     cost = 100
     build_time = 2
     slots = 1
-    production = { type = "produce" id_units = 10 amount = 1 time = 2 cost = 50 }
+    production = { type = ressource amount = 1 time = 2 cost = 50 }
     prerequisites = [ { id_building = "town" } ]
 }
 
@@ -90,7 +89,6 @@ infantry { attack = 5 }
         expect(building.name).toBe("barracks");
         expect(building.cost).toBe(100);
         expect(building.production).toBeDefined();
-        expect(building.production.prodUnitId).toBe(10);
 
         // Ensure there are no parse diagnostics (try common diagnostic fields)
         expect(result.parseResult.parserErrors).toHaveLength(0);

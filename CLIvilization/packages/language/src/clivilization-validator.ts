@@ -88,6 +88,24 @@ export class ClIvilizationValidator {
                 }
             }
         }
+
+        // Validation: a city must not declare both whitelist and blacklist at the same time
+        // for buildings and for units.
+        const hasWhitelistBuildings = (city as any).whitelist_buildings !== undefined;
+        const hasBlacklistBuildings = (city as any).blacklist_buildings !== undefined;
+        if (hasWhitelistBuildings && hasBlacklistBuildings) {
+            accept('error', `City '${(city as any).name}' cannot have both 'whitelist_buildings' and 'blacklist_buildings'. Choose at most one.`, {
+                node: city
+            });
+        }
+
+        const hasWhitelistUnits = (city as any).whitelist_units !== undefined;
+        const hasBlacklistUnits = (city as any).blacklist_units !== undefined;
+        if (hasWhitelistUnits && hasBlacklistUnits) {
+            accept('error', `City '${(city as any).name}' cannot have both 'whitelist_units' and 'blacklist_units'. Choose at most one.`, {
+                node: city
+            });
+        }
     }
 
     // Model-level checks: unique city names, unique building names, unique unit names

@@ -1,0 +1,57 @@
+[size]
+x=25
+y=25
+
+[cities]
+Thèbes {
+    x=4
+    y=5
+    color=#FFD700
+    starting_resources=30
+    player_type=PLAYER
+    nb_slots_buildings=3
+    starting_buildings=[]
+    nb_slots_units=2
+    starting_units=[ { id_units=prêtre nb_units=2 } ]
+    blacklist_units=[]
+}
+Memphis {
+    x=10
+    y=10
+    color=#CCCC00
+    starting_resources=25
+    player_type=AI
+    nb_slots_buildings=2
+    starting_buildings=[]
+    nb_slots_units=3
+    starting_units=[ { id_units=archer nb_units=1 } ]
+    whitelist_units=[]
+}
+
+[game]
+current_turn=5
+ui_color=#FFFF99
+
+[victory_conditions]
+nb_turns=200
+resources_spent=2500
+
+[buildings]
+temple {
+    cost=8
+    build_time=5
+    slots=1
+    production={ type=unit id_units=prêtre amount=1 time=4 cost=5 }
+    prerequisites=[]
+}
+pyramide {
+    cost=10
+    build_time=6
+    slots=2
+    production={ type=unit id_units=archer amount=1 time=5 cost=6 }
+    prerequisites=[]
+}
+
+[units]
+prêtre { attack=0 }
+archer { attack=1 }

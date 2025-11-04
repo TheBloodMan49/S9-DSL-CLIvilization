@@ -32,8 +32,7 @@ Farm {
     build_time = 1
     slots = 1
     production = {
-        type = food
-        id_units = 0
+        type = ressource
         amount = 1
         time = 1
         cost = 0
@@ -53,11 +52,10 @@ city1 {
     color = #ff0000
     starting_resources = 100
     player_type = PLAYER
-    civilization = farm_civ
     nb_slots_buildings = 2
     starting_buildings = [ { id_building = Farm level = 1 } ]
     nb_slots_units = 2
-    starting_units = [ { id_units = Worker } ]
+    starting_units = [ { id_units = Worker nb_units = 1 } ]
 }
         `.trim();
 

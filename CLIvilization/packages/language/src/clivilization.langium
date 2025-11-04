@@ -24,15 +24,14 @@ City:
         'color' '=' color=COLOR
         'starting_resources' '=' startingResources=INT
         'player_type' '=' playerType=PlayerType
-        'civilization' '=' civilization=Value
         'nb_slots_buildings' '=' nbSlotsBuildings=INT
         'starting_buildings' '=' buildings=BuildingInstanceArray
-        ('blacklist_buildings' '=' blacklist_buildings=IntArray)?
-        ('whitelist_buildings' '=' whitelist_buildings=IntArray)?
+        ('blacklist_buildings' '=' blacklist_buildings=ValueArray)?
+        ('whitelist_buildings' '=' whitelist_buildings=ValueArray)?
         'nb_slots_units' '=' nbSlotsUnits=INT
         'starting_units' '=' units=UnitInstanceArray
-        ('blacklist_units' '=' blacklist_units=IntArray)?
-        ('whitelist_units' '=' whitelist_units=IntArray)?
+        ('blacklist_units' '=' blacklist_units=ValueArray)?
+        ('whitelist_units' '=' whitelist_units=ValueArray)?
     '}'
 ;
 
@@ -55,7 +54,10 @@ UnitInstanceArray:
 ;
 
 UnitInstance:
-    '{' 'id_units' '=' id_units=Value '}'
+    '{'
+        'id_units' '=' id_units=Value
+        'nb_units' '=' nb_units=INT
+    '}'
 ;
 
 Game:
@@ -85,20 +87,23 @@ BuildingDef:
 
 Production:
     '{'
-        'type' '=' prodType=Value
-        'id_units' '=' prodUnitId=INT
+        'type' '=' prodType=ProductionType
+        ('id_units' '=' prodUnitId=Value)?
         'amount' '=' amount=INT
         'time' '=' time=INT
         'cost' '=' cost=INT
     '}'
 ;
 
+ProductionType returns string:
+    "unit" | "ressource" ;
+
 PrereqArray:
     '[' (prereqs+=Prereq (',' prereqs+=Prereq)*)? ']'
 ;
 
 Prereq:
-    '{' 'id_building' '=' id_building=STRING '}'
+    '{' 'id_building' '=' id_building=Value '}'
 ;
 
 UnitDefArray:
@@ -128,6 +133,10 @@ terminal ID:
 
 IntArray:
     '[' (values+=INT (',' values+=INT)*)? ']'
+;
+
+ValueArray:
+    '[' (values+=Value (',' values+=Value)*)? ']'
 ;
 
 terminal INT returns number:

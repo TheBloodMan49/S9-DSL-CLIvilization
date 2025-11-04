@@ -1,95 +1,55 @@
 [size]
-x=10
-y=10
+x=20
+y=20
 
 [cities]
-Rome {
-    x=1
-    y=1
-    color=#000000
-    starting_resources=10
+Demacia {
+    x=5
+    y=4
+    color=#FFCC00
+    starting_resources=15
     player_type=PLAYER
-    civilization="Test"
     nb_slots_buildings=2
-    starting_buildings=[
-        {
-            id_building=caserne
-            level=0
-        }
-    ]
-    blacklist_buildings=[]
-    nb_slots_units=2
-    starting_units=[
-        {
-            id_units=légionnaire
-        }
-    ]
-    blacklist_units=[]
+    starting_buildings=[]
+    nb_slots_units=6
+    starting_units=[]
 }
-Athene {
-    x=1
-    y=1
-    color=#000000
-    starting_resources=10
+Noxus {
+    x=15
+    y=5
+    color=#CC0000
+    starting_resources=12
     player_type=AI
-    civilization="Test"
     nb_slots_buildings=2
-    starting_buildings=[
-        {
-            id_building=caserne
-            level=0
-        }
-    ]
-    whitelist_buildings=[]
-    nb_slots_units=2
-    starting_units=[
-        {
-            id_units=légionnaire2
-        }
-    ]
-    whitelist_units=[]
+    starting_buildings=[]
+    nb_slots_units=6
+    starting_units=[]
 }
 
 [game]
-current_turn=0
-ui_color=#FFFFFF
+current_turn=2
+ui_color=#FF00FF
 
 [victory_conditions]
-nb_turns=100
+nb_turns=120
 resources_spent=1000
 
 [buildings]
-caserne {
-    cost=2
-    build_time=3
+tour {
+    cost=3
+    build_time=2
     slots=1
-    production={
-        type="unit"
-        id_units=2
-        amount=1
-        time=2
-        cost=3
-    }
+    production={ type=unit id_units=mele amount=1 time=2 cost=2 }
     prerequisites=[]
 }
-caserne2 {
-    cost=2
+inhibiteur {
+    cost=4
     build_time=3
     slots=1
-    production={
-        type="unit"
-        id_units=2
-        amount=1
-        time=2
-        cost=3
-    }
+    production={ type=unit id_units=casteur amount=1 time=2 cost=3 }
     prerequisites=[]
 }
 
 [units]
-légionnaire {
-    attack=1
-}
-légionnaire2 {
-    attack=1
-}
+mele { attack=1 }
+casteur { attack=2 }

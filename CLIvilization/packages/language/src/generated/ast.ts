@@ -36,7 +36,6 @@ export type ClIvilizationKeywordNames =
     | "blacklist_buildings"
     | "blacklist_units"
     | "build_time"
-    | "civilization"
     | "color"
     | "cost"
     | "current_turn"
@@ -46,10 +45,12 @@ export type ClIvilizationKeywordNames =
     | "nb_slots_buildings"
     | "nb_slots_units"
     | "nb_turns"
+    | "nb_units"
     | "player_type"
     | "prerequisites"
     | "production"
     | "resources_spent"
+    | "ressource"
     | "slots"
     | "starting_buildings"
     | "starting_resources"
@@ -57,6 +58,7 @@ export type ClIvilizationKeywordNames =
     | "time"
     | "type"
     | "ui_color"
+    | "unit"
     | "whitelist_buildings"
     | "whitelist_units"
     | "x"
@@ -156,10 +158,9 @@ export function isCities(item: unknown): item is Cities {
 export interface City extends langium.AstNode {
     readonly $container: Cities;
     readonly $type: 'City';
-    blacklist_buildings?: IntArray;
-    blacklist_units?: IntArray;
+    blacklist_buildings?: ValueArray;
+    blacklist_units?: ValueArray;
     buildings: BuildingInstanceArray;
-    civilization: Value;
     color: string;
     name: Value;
     nbSlotsBuildings: number;
@@ -167,8 +168,8 @@ export interface City extends langium.AstNode {
     playerType: PlayerType;
     startingResources: number;
     units: UnitInstanceArray;
-    whitelist_buildings?: IntArray;
-    whitelist_units?: IntArray;
+    whitelist_buildings?: ValueArray;
+    whitelist_units?: ValueArray;
     x: number;
     y: number;
 }
@@ -178,7 +179,6 @@ export const City = {
     blacklist_buildings: 'blacklist_buildings',
     blacklist_units: 'blacklist_units',
     buildings: 'buildings',
-    civilization: 'civilization',
     color: 'color',
     name: 'name',
     nbSlotsBuildings: 'nbSlotsBuildings',
@@ -214,7 +214,6 @@ export function isGame(item: unknown): item is Game {
 }
 
 export interface IntArray extends langium.AstNode {
-    readonly $container: City;
     readonly $type: 'IntArray';
     values: Array<number>;
 }
@@ -251,7 +250,7 @@ export function isPlayerType(item: unknown): item is PlayerType {
 export interface Prereq extends langium.AstNode {
     readonly $container: PrereqArray;
     readonly $type: 'Prereq';
-    id_building: string;
+    id_building: Value;
 }
 
 export const Prereq = {
@@ -283,8 +282,8 @@ export interface Production extends langium.AstNode {
     readonly $type: 'Production';
     amount: number;
     cost: number;
-    prodType: Value;
-    prodUnitId: number;
+    prodType: ProductionType;
+    prodUnitId?: Value;
     time: number;
 }
 
@@ -299,6 +298,12 @@ export const Production = {
 
 export function isProduction(item: unknown): item is Production {
     return reflection.isInstance(item, Production.$type);
+}
+
+export type ProductionType = 'ressource' | 'unit';
+
+export function isProductionType(item: unknown): item is ProductionType {
+    return item === 'unit' || item === 'ressource';
 }
 
 export type Section = BuildingDefArray | Cities | Game | Size | UnitDefArray | VictoryConditions;
@@ -364,11 +369,13 @@ export interface UnitInstance extends langium.AstNode {
     readonly $container: UnitInstanceArray;
     readonly $type: 'UnitInstance';
     id_units: Value;
+    nb_units: number;
 }
 
 export const UnitInstance = {
     $type: 'UnitInstance',
-    id_units: 'id_units'
+    id_units: 'id_units',
+    nb_units: 'nb_units'
 } as const;
 
 export function isUnitInstance(item: unknown): item is UnitInstance {
@@ -394,6 +401,21 @@ export type Value = string;
 
 export function isValue(item: unknown): item is Value {
     return (typeof item === 'string' && (/"(\\(?:[\s\S])|(?:(?!(\\|"))[\s\S]*?))*"/.test(item) || /([a-z]|[A-Z]|[À-ÿ]|_)([a-z]|[A-Z]|[À-ÿ]|[0-9]|_)*/.test(item)));
+}
+
+export interface ValueArray extends langium.AstNode {
+    readonly $container: City;
+    readonly $type: 'ValueArray';
+    values: Array<Value>;
+}
+
+export const ValueArray = {
+    $type: 'ValueArray',
+    values: 'values'
+} as const;
+
+export function isValueArray(item: unknown): item is ValueArray {
+    return reflection.isInstance(item, ValueArray.$type);
 }
 
 export interface VictoryConditions extends langium.AstNode {
@@ -432,6 +454,7 @@ export type ClIvilizationAstType = {
     UnitDefArray: UnitDefArray
     UnitInstance: UnitInstance
     UnitInstanceArray: UnitInstanceArray
+    ValueArray: ValueArray
     VictoryConditions: VictoryConditions
 }
 
@@ -514,9 +537,6 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
                 },
                 buildings: {
                     name: City.buildings
-                },
-                civilization: {
-                    name: City.civilization
                 },
                 color: {
                     name: City.color
@@ -671,6 +691,9 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
             properties: {
                 id_units: {
                     name: UnitInstance.id_units
+                },
+                nb_units: {
+                    name: UnitInstance.nb_units
                 }
             },
             superTypes: []
@@ -680,6 +703,16 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
             properties: {
                 units: {
                     name: UnitInstanceArray.units,
+                    defaultValue: []
+                }
+            },
+            superTypes: []
+        },
+        ValueArray: {
+            name: ValueArray.$type,
+            properties: {
+                values: {
+                    name: ValueArray.values,
                     defaultValue: []
                 }
             },
