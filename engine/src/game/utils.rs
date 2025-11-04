@@ -1,4 +1,4 @@
-
+use anyhow::{anyhow, Result};
 
 pub fn hash_tmb(text: String) -> u32 {
     let mut hash: u32 = 2166136261; // FNV offset basis
@@ -33,4 +33,14 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     (r, g, b)
 }
 
-
+pub fn write_to_file(filename: &str, content: &str) -> Result<()>{
+    // Create output/ directory if it doesn't exist
+    std::fs::create_dir_all("output")?;
+    let filepath = format!("output/{}", filename);
+    if let Err(e) = std::fs::write(&filepath, content) {
+        //TODO: log
+        return Err(anyhow!("Failed to write to file {}: {}", filepath, e));
+    }
+    //TODO: log success
+    Ok(())
+}

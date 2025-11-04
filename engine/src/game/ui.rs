@@ -173,21 +173,15 @@ pub fn draw_color_test_rgb(terminal: &mut Terminal<CrosstermBackend<std::io::Std
     // Build a cube of RGB colors with as much height as fits in terminal
     let mut lines: Vec<Line> = Vec::new();
     let height = terminal.size()?.height - 10;
-    // Show the color grid as a grid of hue and saturation, varying brightness by row
-    for row in 0..height {
+    // Show the color grid as a grid of hue and value
+    for v in 0..height {
         let mut spans: Vec<Span> = Vec::new();
-        let brightness = row as f32 / height as f32;
-        for hue_step in 0..36 {
-            let hue = hue_step as f32 * 10.0;
-            for sat_step in 0..5 {
-                let saturation = sat_step as f32 / 4.0;
-                let (r, g, b) = hsv_to_rgb(hue, saturation, brightness);
-                let text = " ";
-                let style = Style::default().bg(Color::Rgb(r, g, b)).fg(Color::Reset);
-                spans.push(Span::styled(text, style));
-            }
-            // add a small spacer between hue blocks
-            spans.push(Span::raw(" "));
+        for h in 0..=360 {
+            let (r, g, b) = hsv_to_rgb(h as f32, 1.0, v as f32 / height as f32);
+            let color = Color::Rgb(r, g, b);
+            let text = "  "; // two spaces for better visibility
+            let style = Style::default().bg(color).fg(Color::Reset);
+            spans.push(Span::styled(text, style));
         }
         lines.push(Line::from(spans));
     }

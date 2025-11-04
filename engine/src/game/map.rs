@@ -63,6 +63,16 @@ impl Terrain {
             }
         }
     }
+
+    pub fn to_char(&self) -> char {
+        match self {
+            Terrain::Water => '~',
+            Terrain::Plains => '.',
+            Terrain::Desert => ':',
+            Terrain::City => 'C',
+            Terrain::Mountain => '^',
+        }
+    }
 }
 
 
@@ -151,5 +161,16 @@ impl GameMap {
     pub fn new_random() -> Self {
         let seed = rand::random::<u64>().to_string();
         Self::new(seed)
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut map_str = String::new();
+        for row in &self.tiles {
+            for terrain in row {
+                map_str.push(terrain.to_char());
+            }
+            map_str.push('\n');
+        }
+        map_str
     }
 }

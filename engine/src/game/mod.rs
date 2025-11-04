@@ -3,6 +3,7 @@ pub mod state;
 pub mod ui;
 pub mod utils;
 
+use crate::game::utils::write_to_file;
 use self::state::GameState;
 use self::ui::draw_ui;
 
@@ -56,6 +57,13 @@ impl Game {
                     }
                     KeyCode::Char('z') | KeyCode::Char('Z') => {
                         self.state.cycle_zoom();
+                    }
+                    KeyCode::Char('w') => {
+                        // Write map to file
+                        let filename = format!("map_{}.txt", self.state.map.seed);
+                        // Open file and get map string
+                        let map_string = self.state.map.to_string();
+                        write_to_file(&filename, &map_string).expect("TODO: panic message");
                     }
                     _ => {
                         // other global key handling could go here
