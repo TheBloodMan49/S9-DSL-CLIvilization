@@ -81,7 +81,7 @@ Validation checks include:
 
 Validation are in [`CLIvilization/packages/language/src/clivilization-validator.ts`](CLIvilization/packages/language/src/clivilization-validator.ts)
 
-## Tests
+## Tests
 
 Tests for the AST and validation are located in the [`CLIvilization/packages/language/test`](CLIvilization/packages/language/test) folder.
 There are 3 test files:
