@@ -80,3 +80,18 @@ Validation checks include:
 - Ensuring that every City, BuildingInstance, and UnitInstance has a unique identifier
 
 Validation are in [`CLIvilization/packages/language/src/clivilization-validator.ts`](CLIvilization/packages/language/src/clivilization-validator.ts)
+
+## Tests
+
+Tests for the AST and validation are located in the [`CLIvilization/packages/language/test`](CLIvilization/packages/language/test) folder.
+There are 3 test files:
+- `parsing.test.ts` : tests for parsing the DSL and generating the AST
+- `linking.test.ts` : tests for cross-references in the AST
+- `validation.test.ts` : tests for validating the DSL definitions
+
+You can run the tests using:
+
+```bash
+cd CLIvilization/
+npm test
+```
