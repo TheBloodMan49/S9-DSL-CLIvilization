@@ -16,8 +16,9 @@ const packageContent = await fs.readFile(packagePath, 'utf-8');
 export const generateAction = async (source: string, destination: string): Promise<void> => {
     const services = createClIvilizationServices(NodeFileSystem).ClIvilization;
     const model = await extractAstNode<Model>(source, services);
+    console.log(chalk.dim(`Generating game executable...`))
     const generatedFilePath = generateOutput(model, source, destination);
-    console.log(chalk.green(`Code generated succesfully: ${generatedFilePath}`));
+    console.log(chalk.green(`Code generated successfully: ${generatedFilePath}`));
 };
 
 export default function(): void {

@@ -34,14 +34,19 @@ impl Game {
         }
     }
 
-    pub fn from_config(config_path: &str) -> anyhow::Result<Self> {
+    pub fn from_file(config_path: &str) -> anyhow::Result<Self> {
 
         // Read file
         let contents = std::fs::read_to_string(config_path)
             .context(format!("failed to read config file `{}`", config_path))?;
 
+        Self::from_string(&contents)
+    }
+    
+    pub fn from_string(config_string: &str) -> anyhow::Result<Self> {
+        
         // Parse JSON into AST model
-        let model: crate::ast::Model = serde_json::from_str(&contents)
+        let model: crate::ast::Model = serde_json::from_str(&config_string)
             .context("failed to parse config JSON")?;
 
         // Start from default game state
@@ -66,8 +71,7 @@ impl Game {
 
         Ok(game)
     }
-
-
+    
     pub fn run(
         &mut self,
         terminal: &mut ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>,

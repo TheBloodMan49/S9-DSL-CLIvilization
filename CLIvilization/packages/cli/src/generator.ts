@@ -1,18 +1,27 @@
 import type { Model } from 'clivilization-language';
-import { expandToNode, toString } from 'langium/generate';
 import * as fs from 'node:fs';
 import { extractDestinationAndName } from './util.js';
+import {execSync} from "node:child_process";
 
 export function generateOutput(model: Model, source: string, destination: string): string {
     const data = extractDestinationAndName(destination);
 
-    const fileNode = expandToNode`
-        // TODO : place here generated code
-    `.appendNewLineIfNotEmpty();
-
     if (!fs.existsSync(data.destination)) {
         fs.mkdirSync(data.destination, { recursive: true });
     }
-    fs.writeFileSync(destination, toString(fileNode));
+
+    // Set the environment variable with the JSON output
+    process.env["CONFIG_BLOB"] = JSON.stringify(model, (key, value) => {
+        if (key.startsWith('$')) return undefined; // Exclude Langium-internal properties
+        return value;
+    });
+
+    // Build the executable
+    execSync(
+        `cd $(git rev-parse --show-toplevel)/engine || exit 1;
+        cargo build --release || exit 1;
+        cp ./target/release/clivilization-engine ${data.destination}/${data.name} || exit 1`,
+    )
+
     return destination;
 }

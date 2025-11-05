@@ -26,11 +26,28 @@ struct Args {
     /// Load config from file
     #[arg(long)]
     config: Option<String>,
+
+    /// Dump config blob
+    #[arg(long)]
+    blob: bool,
 }
 
 fn main() -> Result<()> {
     // Use clap to parse a --test-color flag for testing color schemes
     let matches = Args::parse();
+
+    // Get the config blob
+    let blob = option_env!("CONFIG_BLOB");
+
+    if matches.blob {
+        if let Some(blob_str) = blob {
+            println!("{}", blob_str);
+        } else {
+            println!("This binary does not contain a blob.");
+        }
+
+        return Ok(());
+    }
 
     // Setup terminal
     enable_raw_mode().context("failed to enable raw mode")?;
@@ -60,9 +77,13 @@ fn main() -> Result<()> {
     
     // Load config if provided
     let mut game = if let Some(config_path) = matches.config {
-        game::Game::from_config(&config_path)?
+        game::Game::from_file(&config_path)?
     } else {
-        game::Game::new()
+        if let Some(blob_str) = blob {
+            game::Game::from_string(blob_str)?
+        } else {
+            game::Game::new()
+        }
     };
 
     // Game loop
