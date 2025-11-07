@@ -1,9 +1,10 @@
 import type { Model } from 'clivilization-language';
 import * as fs from 'node:fs';
 import { extractDestinationAndName } from './util.js';
-import {execSync} from "node:child_process";
+import {exec} from "node:child_process";
+import * as util from "node:util";
 
-export function generateOutput(model: Model, source: string, destination: string): string {
+export async function generateOutput(model: Model, source: string, destination: string): Promise<string> {
     const data = extractDestinationAndName(destination);
 
     if (!fs.existsSync(data.destination)) {
@@ -17,10 +18,10 @@ export function generateOutput(model: Model, source: string, destination: string
     });
 
     // Build the executable
-    execSync(
+    await util.promisify(exec)(
         `cd $(git rev-parse --show-toplevel)/engine || exit 1;
         cargo build --release 2> /dev/null || exit 1;
-        cp ./target/release/clivilization-engine ${data.destination}/${data.name} || exit 1`,
+        cp ./target/release/clivilization-engine ${data.destination}/${data.name} || exit 1`
     )
 
     return destination;

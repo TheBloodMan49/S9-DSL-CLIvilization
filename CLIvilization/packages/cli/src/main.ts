@@ -9,7 +9,7 @@ import * as url from 'node:url';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import {execSync} from "child_process";
-import ora from "ora";
+import yoctoSpinner from "yocto-spinner";
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const packagePath = path.resolve(__dirname, '..', 'package.json');
@@ -27,13 +27,13 @@ export const generateAction = async (source: string, destination: string): Promi
         return;
     }
 
-    const spinner = ora('Generating game executable').start();
+    const spinner = yoctoSpinner().start('Generating game executable');
     try {
 
-        const generatedFilePath = generateOutput(model, source, destination);
-        spinner.succeed(`Executable generated successfully: ${generatedFilePath}`)
+        const generatedFilePath = await generateOutput(model, source, destination);
+        spinner.success(`Executable generated successfully: ${generatedFilePath}`)
     } catch (e) {
-        spinner.fail("Generation failed")
+        spinner.error("Generation failed")
         return;
     }
 };
