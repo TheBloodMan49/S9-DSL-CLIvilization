@@ -1,7 +1,7 @@
 use crate::game::utils::hash_tmb;
 use noise::{NoiseFn, Perlin};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Terrain {
     Water,
     Plains,
@@ -75,7 +75,7 @@ impl Terrain {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GameMap {
     pub tiles: Vec<Vec<Terrain>>,
     pub width: usize,

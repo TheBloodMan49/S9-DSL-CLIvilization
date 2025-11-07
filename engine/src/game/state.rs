@@ -1,15 +1,18 @@
 use crate::ast::{BuildingDef, BuildingDefArray, BuildingInstanceArray, City, PlayerType, PrereqArray, Production, ProductionType, UnitDef, UnitDefArray, UnitInstanceArray};
 use super::map::GameMap;
 
+#[derive(Debug)]
 pub struct Civilization {
     pub resources: Resources,
     pub city: City,
 }
 
+#[derive(Debug)]
 pub struct Resources {
     pub ressources: i32,
 }
 
+#[derive(Debug)]
 pub struct GameState {
     pub map: GameMap,
     pub turn: i32,
@@ -28,8 +31,12 @@ pub struct GameState {
     pub camera_mode: bool,
 
     // definition
-    buildings: Vec<BuildingDef>,
-    units: Vec<UnitDef>,
+    pub buildings: Vec<BuildingDef>,
+    pub units: Vec<UnitDef>,
+
+    // victory conditions
+    pub nbTurns: u32,
+    pub resourcesSpent: u32,
 
     pub zoom_level: u8, // 1, 2, or 3
 }
@@ -124,6 +131,8 @@ impl GameState {
                     attack: 1,
                 },
             ]),
+            nbTurns: 500,
+            resourcesSpent: 300,
         }
     }
 
