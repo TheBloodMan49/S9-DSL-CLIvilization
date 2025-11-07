@@ -65,10 +65,8 @@ fn main() -> Result<()> {
         }
         // Wait for a key press
         loop {
-            if event::poll(std::time::Duration::from_millis(100))? {
-                if let Event::Key(_) = event::read()? {
-                    break;
-                }
+            if event::poll(std::time::Duration::from_millis(100))? && let Event::Key(_) = event::read()? {
+                break;
             }
         }
         cleanup_term(&mut terminal)?;
@@ -78,12 +76,10 @@ fn main() -> Result<()> {
     // Load config if provided
     let mut game = if let Some(config_path) = matches.config {
         game::Game::from_file(&config_path)?
+    } else if let Some(blob_str) = blob {
+        game::Game::from_string(blob_str)?
     } else {
-        if let Some(blob_str) = blob {
-            game::Game::from_string(blob_str)?
-        } else {
-            game::Game::new()
-        }
+        game::Game::new()
     };
 
     // Game loop
