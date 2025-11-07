@@ -122,8 +122,6 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
 }
 
 fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    let total_population: i32 = state.cities.iter().map(|city| city.population).sum();
-
     // Build seed line with editing indicator
     let seed_line = if state.seed_editing {
         format!("Seed: {}{} (Enter to apply)", state.seed_input, "|")
@@ -132,9 +130,8 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
     };
 
     let info_text = format!(
-        "Units: 1 Settler\nCities: {}\nPopulation: {}\n\n{}\n",
-        state.cities.len(),
-        total_population,
+        "Units: 1 Settler\nCities: {}\n\n{}\n",
+        state.civilizations.len(),
         seed_line
     );
 
@@ -148,9 +145,10 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
 }
 
 fn draw_resources_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
+    // TODO: use dynamic resources from state (current player)
     let resources = Paragraph::new(format!(
         "ressources: {}",
-        state.resources.ressources
+        0
     ))
     .block(Block::default()
         .title("Resources")

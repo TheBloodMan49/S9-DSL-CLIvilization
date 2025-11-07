@@ -1,19 +1,22 @@
+use crate::ast::{BuildingDef, BuildingDefArray, BuildingInstanceArray, City, PlayerType, PrereqArray, Production, ProductionType, UnitDef, UnitDefArray, UnitInstanceArray};
 use super::map::GameMap;
+
+pub struct Civilization {
+    pub resources: Resources,
+    pub city: City,
+}
 
 pub struct Resources {
     pub ressources: i32,
 }
 
-pub struct City {
-    pub population: i32,
-}
-
 pub struct GameState {
     pub map: GameMap,
-    pub resources: Resources,
-    pub cities: Vec<City>,
     pub turn: i32,
     pub year: i32,
+
+    // Civilizations
+    pub civilizations: Vec<Civilization>,
 
     // Added: seed input and editing state
     pub seed_input: String,
@@ -24,6 +27,10 @@ pub struct GameState {
     pub camera_y: i32,
     pub camera_mode: bool,
 
+    // definition
+    buildings: Vec<BuildingDef>,
+    units: Vec<UnitDef>,
+
     pub zoom_level: u8, // 1, 2, or 3
 }
 
@@ -31,18 +38,92 @@ impl GameState {
     pub fn new(map: GameMap) -> Self {
         Self {
             map: map.clone(),
-            resources: Resources {
-                ressources: 100,
-            },
-            cities: vec![City { population: 1 }],
             turn: 1,
             year: -2500,
+
+            civilizations: Vec::from([
+                Civilization {
+                    resources: Resources { ressources: 100 },
+                    city: City {
+                        name: "Player".to_string(),
+                        x: map.width as u32 / 2 - 5,
+                        y: map.height as u32 / 2,
+                        buildings: BuildingInstanceArray { elements: Vec::new() },
+                        blacklist_buildings: None,
+                        blacklist_units: None,
+                        color: "#0000FF".into(),
+                        nbSlotsBuildings: 5,
+                        nbSlotsUnits: 10,
+                        playerType: PlayerType::PLAYER,
+                        startingResources: 40,
+                        units: UnitInstanceArray { units: Vec::new() },
+                        whitelist_buildings: None,
+                        whitelist_units: None,
+                    },
+                },
+                Civilization {
+                    resources: Resources { ressources: 100 },
+                    city: City {
+                        name: "IA".to_string(),
+                        x: map.width as u32 / 2 - 5,
+                        y: map.height as u32 / 2,
+                        buildings: BuildingInstanceArray { elements: Vec::new() },
+                        blacklist_buildings: None,
+                        blacklist_units: None,
+                        color: "#FF0000".into(),
+                        nbSlotsBuildings: 5,
+                        nbSlotsUnits: 10,
+                        playerType: PlayerType::AI,
+                        startingResources: 40,
+                        units: UnitInstanceArray { units: Vec::new() },
+                        whitelist_buildings: None,
+                        whitelist_units: None,
+                    },
+                }
+            ]),
+
             seed_input: map.seed,
             seed_editing: false,
             camera_x: 0,
             camera_y: 0,
             camera_mode: false,
             zoom_level: 1,
+            buildings: Vec::from([
+                BuildingDef {
+                    name: "Farm".to_string(),
+                    cost: 10,
+                    buildTime: 2,
+                    prerequisites: PrereqArray { prereqs: Vec::new() },
+                    production: Production {
+                        amount: 5,
+                        cost: 0,
+                        prodType: ProductionType::ressource,
+                        prodUnitId: None,
+                        time: 1,
+                    },
+                    slots: 1,
+                },
+                BuildingDef {
+                    name: "Barracks".to_string(),
+                    cost: 20,
+                    buildTime: 4,
+                    prerequisites: PrereqArray { prereqs: Vec::new() },
+                    production: Production {
+                        amount: 0,
+                        cost: 5,
+                        prodType: ProductionType::unit,
+                        prodUnitId: Some("Warrior".to_string()),
+                        time: 3,
+                    },
+                    slots: 1,
+                },
+            ]),
+            units: Vec::from([
+                UnitDef {
+                    name: "Warrior".to_string(),
+                    attack: 1,
+                },
+            ]),
         }
     }
 
