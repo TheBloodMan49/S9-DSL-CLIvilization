@@ -108,46 +108,6 @@ impl GameMap {
             }
         }
 
-        // Place cities intelligently
-        let mut cities = Vec::new();
-        let mut min_distance = 20;
-        let max_attempts = 1000;
-
-        while cities.len() < 3 {
-            let mut attempts = 0;
-            let mut placed = false;
-
-            while attempts < max_attempts && !placed {
-                let x = (hash_tmb(format!("{}-city-x-{}-{}", seed, cities.len(), attempts)) as usize
-                    % width) as usize;
-                let y = (hash_tmb(format!("{}-city-y-{}-{}", seed, cities.len(), attempts)) as usize
-                    % height) as usize;
-
-                if matches!(tiles[y][x], Terrain::Plains) {
-                    let mut valid = true;
-                    for (cx, cy) in &cities {
-                        let distance = ((x as i32 - cx).pow(2) + (y as i32 - cy).pow(2)) as f64;
-                        if distance.sqrt() < min_distance as f64 {
-                            valid = false;
-                            break;
-                        }
-                    }
-
-                    if valid {
-                        tiles[y][x] = Terrain::City;
-                        cities.push((x as i32, y as i32));
-                        placed = true;
-                    }
-                }
-
-                attempts += 1;
-            }
-
-            if !placed && min_distance > 5 {
-                min_distance -= 1;
-            }
-        }
-
         Self {
             tiles,
             width,

@@ -22,7 +22,6 @@ pub struct GameState {
     pub civilizations: Vec<Civilization>,
 
     // Added: seed input and editing state
-    pub seed_input: String,
     pub seed_editing: bool,
 
     // Camera/viewport
@@ -42,9 +41,9 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn new(map: GameMap) -> Self {
+    pub fn new() -> Self {
         Self {
-            map: map.clone(),
+            map: GameMap::new_random(160usize, 40usize),
             turn: 1,
             year: -2500,
 
@@ -53,8 +52,8 @@ impl GameState {
                     resources: Resources { ressources: 100 },
                     city: City {
                         name: "Player".to_string(),
-                        x: map.width as u32 / 2 - 5,
-                        y: map.height as u32 / 2,
+                        x: 10,
+                        y: 10,
                         buildings: BuildingInstanceArray { elements: Vec::new() },
                         blacklist_buildings: None,
                         blacklist_units: None,
@@ -72,8 +71,8 @@ impl GameState {
                     resources: Resources { ressources: 100 },
                     city: City {
                         name: "IA".to_string(),
-                        x: map.width as u32 / 2 - 5,
-                        y: map.height as u32 / 2,
+                        x: 20,
+                        y: 20,
                         buildings: BuildingInstanceArray { elements: Vec::new() },
                         blacklist_buildings: None,
                         blacklist_units: None,
@@ -89,7 +88,6 @@ impl GameState {
                 }
             ]),
 
-            seed_input: map.seed,
             seed_editing: false,
             camera_x: 0,
             camera_y: 0,
@@ -144,20 +142,20 @@ impl GameState {
     // Add a character to the seed input (when editing)
     pub fn add_seed_char(&mut self, ch: char) {
         if self.seed_editing {
-            self.seed_input.push(ch);
+            self.map.seed.push(ch);
         }
     }
 
     // Remove last character from seed input
     pub fn backspace_seed(&mut self) {
         if self.seed_editing {
-            self.seed_input.pop();
+            self.map.seed.pop();
         }
     }
 
     // Apply the current seed: rebuild the map with the seed and stop editing
     pub fn submit_seed(&mut self) {
-        self.map = GameMap::new(self.seed_input.clone(), self.map.width, self.map.height);
+        self.map = GameMap::new(self.map.seed.clone(), self.map.width, self.map.height);
         self.seed_editing = false;
     }
 

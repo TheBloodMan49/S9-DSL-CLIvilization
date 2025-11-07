@@ -101,6 +101,11 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
         })
         .collect();
 
+    //TODO: ajouter l'affichage des capitales
+    for civ in &state.civilizations {
+
+    }
+
     let title = if state.camera_mode {
         format!(
             "Map (Camera Mode - Position: {},{} - Zoom: {}x) - Press 'v' or Esc to exit",
@@ -124,9 +129,9 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
 fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     // Build seed line with editing indicator
     let seed_line = if state.seed_editing {
-        format!("Seed: {}{} (Enter to apply)", state.seed_input, "|")
+        format!("Seed: {}{} (Enter to apply)", state.map.seed, "|")
     } else {
-        format!("Seed: {} (press 's' to edit)", state.seed_input)
+        format!("Seed: {} (press 's' to edit)", state.map.seed)
     };
 
     let info_text = format!(
