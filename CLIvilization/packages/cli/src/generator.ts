@@ -19,7 +19,7 @@ export function generateOutput(model: Model, source: string, destination: string
     // Build the executable
     execSync(
         `cd $(git rev-parse --show-toplevel)/engine || exit 1;
-        cargo build --release || exit 1;
+        cargo build --release 2> /dev/null || exit 1;
         cp ./target/release/clivilization-engine ${data.destination}/${data.name} || exit 1`,
     )
 

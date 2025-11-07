@@ -29,5 +29,10 @@
         "packages/language",
         "packages/cli",
         "packages/extension"
-    ]
+    ],
+    "dependencies": {
+        "cli-spinners": "^3.3.0",
+        "ora": "^9.0.0",
+        "tsx": "^4.20.6"
+    }
 }
