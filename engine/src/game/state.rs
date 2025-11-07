@@ -1,9 +1,7 @@
 use super::map::GameMap;
 
 pub struct Resources {
-    pub gold: i32,
-    pub science: i32,
-    pub culture: i32,
+    pub ressources: i32,
 }
 
 pub struct City {
@@ -34,9 +32,7 @@ impl GameState {
         Self {
             map: map.clone(),
             resources: Resources {
-                gold: 100,
-                science: 0,
-                culture: 0,
+                ressources: 100,
             },
             cities: vec![City { population: 1 }],
             turn: 1,

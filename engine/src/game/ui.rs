@@ -149,8 +149,8 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
 
 fn draw_resources_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let resources = Paragraph::new(format!(
-        "Gold: {}  Science: {}  Culture: {}",
-        state.resources.gold, state.resources.science, state.resources.culture
+        "ressources: {}",
+        state.resources.ressources
     ))
     .block(Block::default()
         .title("Resources")
