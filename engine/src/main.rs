@@ -58,15 +58,23 @@ fn main() -> Result<()> {
 
     // If test_color was requested, show the color test and exit on any key press
     if let Some(test_type) = matches.test_color {
-        match test_type.as_str() {
-            "256" => draw_color_test_256(&mut terminal)?,
-            "rgb" => draw_color_test_rgb(&mut terminal)?,
-            _ => unreachable!(),
-        }
         // Wait for a key press
+        let mut offset = 0;
         loop {
-            if event::poll(std::time::Duration::from_millis(100))? && let Event::Key(_) = event::read()? {
-                break;
+            match test_type.as_str() {
+                "256" => draw_color_test_256(&mut terminal)?,
+                "rgb" => draw_color_test_rgb(&mut terminal, offset)?,
+                _ => unreachable!(),
+            }
+            if event::poll(std::time::Duration::from_millis(100))? {
+                if let Event::Key(key) = event::read()? {
+                    if key.code == KeyCode::Char('d') {
+                        offset += 1;
+                    }
+                    else {
+                        break;
+                    }
+                }
             }
         }
         cleanup_term(&mut terminal)?;
