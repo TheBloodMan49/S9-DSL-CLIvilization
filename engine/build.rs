@@ -133,7 +133,7 @@ fn generate_nodes(source_file: &mut BufWriter<File>, content: &str) {
     let node_regex = Regex::new(NODE_REGEX).expect("failed to compile regex pattern");
     let property_regex = Regex::new(PROPERTY_REGEX).expect("failed to compile regex pattern");
 
-    for capture in node_regex.captures_iter(&content) {
+    for capture in node_regex.captures_iter(content) {
         writeln!(
             source_file,
             "#[derive(Serialize, Deserialize, Debug)]\npub struct {} {{",

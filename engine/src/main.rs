@@ -66,8 +66,8 @@ fn main() -> Result<()> {
                 "rgb" => draw_color_test_rgb(&mut terminal, offset)?,
                 _ => unreachable!(),
             }
-            if event::poll(std::time::Duration::from_millis(100))? {
-                if let Event::Key(key) = event::read()? {
+            if event::poll(std::time::Duration::from_millis(100))?
+                && let Event::Key(key) = event::read()? {
                     if key.code == KeyCode::Char('d') {
                         offset += 1;
                     }
@@ -75,7 +75,6 @@ fn main() -> Result<()> {
                         break;
                     }
                 }
-            }
         }
         cleanup_term(&mut terminal)?;
         return Ok(());
@@ -96,8 +95,8 @@ fn main() -> Result<()> {
         game.run(&mut terminal)?;
 
         // Handle input
-        if event::poll(std::time::Duration::from_millis(100))? {
-            if let Event::Key(key) = event::read()? {
+        if event::poll(std::time::Duration::from_millis(100))?
+            && let Event::Key(key) = event::read()? {
                 // Quit on Ctrl+Q
                 if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL) {
                     break;
@@ -105,7 +104,6 @@ fn main() -> Result<()> {
                 // Forward other keys to game handler
                 game.handle_key(key);
             }
-        }
     }
 
     // Cleanup
