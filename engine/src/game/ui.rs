@@ -88,13 +88,28 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
     for civ in &state.civilizations {
         let city = &civ.city;
 
-        for (y, line) in map_lines.iter_mut().enumerate() {
-            for (x, span) in line.iter_mut().enumerate() {
-                if (y + start_y) == (city.y as usize * zoom) && (x + start_x) == (city.x as usize * zoom) {
-                    *span = {
-                        let style = Style::default().fg(Color::Indexed(196)).bg(Color::Indexed(196));
-                        Span::styled("█", style)
-                    };
+        // Position de la ville en tuiles relatives à la zone visible
+        let city_tile_x = city.x as usize;
+        let city_tile_y = city.y as usize;
+
+        // Vérifier si la ville est dans la zone visible
+        if city_tile_x >= start_x && city_tile_x < start_x + visible_width &&
+            city_tile_y >= start_y && city_tile_y < start_y + visible_height {
+
+            // Convertir la position de la tuile en position pixel dans map_lines
+            let pixel_y_start = (city_tile_y - start_y) * zoom;
+            let pixel_x_start = (city_tile_x - start_x) * zoom;
+
+            // Dessiner la ville sur zoom x zoom pixels
+            for dy in 0..zoom {
+                if pixel_y_start + dy < map_lines.len() {
+                    let line = &mut map_lines[pixel_y_start + dy];
+                    for dx in 0..zoom {
+                        if pixel_x_start + dx < line.spans.len() {
+                            let style = Style::default().fg(Color::Indexed(196)).bg(Color::Indexed(196));
+                            line.spans[pixel_x_start + dx] = Span::styled("█", style);
+                        }
+                    }
                 }
             }
         }
