@@ -419,9 +419,17 @@ impl GameState {
         };
         let civ = &mut self.civilizations[civ_index];
         let occupied = civ.city.buildings.elements.len() + civ.constructions.len();
+        // Only one construction at a time
+        if !civ.constructions.is_empty() {
+            return Err("Another construction is already in progress".to_string());
+        }
+
+        // check for available slots
         if occupied >= civ.city.nb_slots_buildings as usize {
             return Err("No available building slots".to_string());
         }
+
+        // check resources
         if civ.resources.ressources < bdef.cost as i32 {
             return Err("Not enough resources for building".to_string());
         }
@@ -448,13 +456,22 @@ impl GameState {
                 }
             }
         }
+        // no producer found
         if producer.is_none() {
             return Err("No building able to produce this unit is present".to_string());
         }
+
+        // only one recruitment at a time
+        if !civ.recruitments.is_empty() {
+            return Err("Another recruitment is already in progress".to_string());
+        }
+
+        // check for available unit slots
         let occupied_units = civ.city.units.units.len() + civ.recruitments.len();
         if occupied_units >= civ.city.nb_slots_units as usize {
             return Err("No available unit slots".to_string());
         }
+
         // use producer's production time and cost
         let bdef = producer.unwrap();
         let cost = bdef.production.cost as i32;
