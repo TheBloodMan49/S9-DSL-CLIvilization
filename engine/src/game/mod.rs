@@ -8,6 +8,9 @@ use crate::game::ui::UiConfig;
 use crate::game::utils::{str_to_color, write_to_file};
 use self::state::GameState;
 use self::ui::draw_ui;
+use rand::Rng;
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum UiState {
@@ -18,20 +21,119 @@ pub enum UiState {
     PopupOpen,
 }
 
+// ===== AI trait + simple RandomAI implementation =====
+
+/// AI trait: implement to allow programmatic players. The AI receives a read-only view of the game
+/// state and the index of the civilization it controls.
+pub trait Ai: Send {
+    /// Return an action string to perform, or None to indicate "no more actions / end turn".
+    fn select_action(&mut self, view: &AiView, civ_index: usize) -> Option<String>;
+
+    /// When a popup is opened, provide the textual input (e.g. "1" or a name) to submit the popup.
+    fn select_popup_input(&mut self, _view: &AiView, _civ_index: usize, popup: &state::Popup) -> String {
+        // Default: pick the first choice if any
+        if !popup.choices.is_empty() {
+            "1".to_string()
+        } else {
+            popup.input.clone()
+        }
+    }
+}
+
+/// Very small random AI used as an example implementation.
+pub struct RandomAi {
+    rng: SmallRng,
+}
+
+impl RandomAi {
+    pub fn new() -> Self {
+        // Seed SmallRng from a random u64
+        let mut tr = rand::thread_rng();
+        let seed: u64 = tr.random();
+        let rng = SmallRng::seed_from_u64(seed);
+        Self { rng }
+    }
+}
+
+impl Ai for RandomAi {
+    fn select_action(&mut self, view: &AiView, civ_index: usize) -> Option<String> {
+        // Build a list of candidate actions
+        let mut actions: Vec<String> = Vec::new();
+        // end is always allowed
+        actions.push("end".to_string());
+
+        // build options
+        for b in &view.buildings {
+            actions.push(format!("build {}", b.to_lowercase()));
+        }
+        // hire options
+        for u in &view.units {
+            actions.push(format!("hire {}", u.to_lowercase()));
+        }
+        // attack options (other players)
+        for (i, p) in view.players.iter().enumerate() {
+            if i != civ_index {
+                actions.push(format!("attack {}", p.name.to_lowercase()));
+            }
+        }
+
+        if actions.is_empty() {
+            return Some("end".into());
+        }
+
+        let idx = self.rng.gen_range(0..actions.len());
+        Some(actions.swap_remove(idx))
+    }
+
+    fn select_popup_input(&mut self, _view: &AiView, _civ_index: usize, popup: &state::Popup) -> String {
+        if popup.choices.is_empty() {
+            // no choices, return empty input
+            "".to_string()
+        } else {
+            let idx = self.rng.gen_range(0..popup.choices.len());
+            // return 1-based index as string
+            (idx + 1).to_string()
+        }
+    }
+}
+
 pub struct Game {
     state: GameState,
     ui_state: UiState,
-    ui_config: UiConfig
+    ui_config: UiConfig,
+    // One AI slot per civilization; None means human / not driven by AI.
+    ais: Vec<Option<Box<dyn Ai>>>,
+}
+
+// Lightweight view passed to AIs to avoid borrows of self
+pub struct AiPlayerView {
+    pub name: String,
+    pub resources: i32,
+    pub buildings: usize,
+    pub units: usize,
+}
+
+pub struct AiView {
+    pub turn: i32,
+    pub player_turn: usize,
+    pub players: Vec<AiPlayerView>,
+    pub buildings: Vec<String>,
+    pub units: Vec<String>,
+    pub seed: String,
 }
 
 impl Game {
     pub fn new() -> Self {
+        let state = GameState::new();
+        let mut ais: Vec<Option<Box<dyn Ai>>> = Vec::new();
+        ais.resize_with(state.civilizations.len(), || None);
         Self {
-            state: GameState::new(),
+            state,
             ui_state: UiState::Normal,
             ui_config: UiConfig {
                 color: ratatui::style::Color::Rgb(255, 255, 255),
             },
+            ais,
         }
     }
 
@@ -88,6 +190,9 @@ impl Game {
                             recruitments: Vec::new(),
                         }
                     }).collect();
+                    // Ensure AI slots match civilizations
+                    game.ais = Vec::new();
+                    game.ais.resize_with(game.state.civilizations.len(), || None);
                 }
                 crate::ast::Section::VictoryConditions(_vc) => {
                     game.state.nb_turns = _vc.nb_turns;
@@ -239,6 +344,172 @@ impl Game {
                     _ => {}
                 }
             }
+        }
+    }
+
+    // ===== Headless / programmatic API =====
+
+    /// Apply an action by string. Returns true if this resulted in a popup opening (requires further input).
+    pub fn apply_action(&mut self, action: &str) -> bool {
+        // prepare action input like interactive mode would
+        self.state.action_input = action.to_string();
+        self.state.action_editing = true;
+        let opened = self.state.submit_action();
+        // update UI state to reflect popup if needed
+        self.ui_state = if opened { UiState::PopupOpen } else { UiState::Normal };
+        opened
+    }
+
+    /// Provide input for an open popup (the text entered by user) and submit it
+    /// Returns true if a popup was present and processed.
+    pub fn submit_popup_input(&mut self, input: &str) -> bool {
+        if self.state.popup.is_none() {
+            return false;
+        }
+        if let Some(p) = &mut self.state.popup {
+            p.input = input.to_string();
+        }
+        self.state.submit_popup();
+        self.ui_state = UiState::Normal;
+        true
+    }
+
+    /// Advance the turn as if the current player ended their turn
+    pub fn step(&mut self) {
+        self.state.player_turn = (self.state.player_turn + 1) % self.state.civilizations.len();
+        if self.state.player_turn == 0 {
+            self.state.turn += 1;
+        }
+    }
+
+    /// Borrow the inner state for read-only inspection
+    pub fn state(&self) -> &GameState {
+        &self.state
+    }
+
+    /// Borrow the inner state mutably
+    pub fn state_mut(&mut self) -> &mut GameState {
+        &mut self.state
+    }
+
+    /// Produce a compact JSON value snapshot describing key game state. Uses serde_json::Value.
+    pub fn snapshot_value(&self) -> serde_json::Value {
+        let players: Vec<serde_json::Value> = self.state.civilizations.iter().map(|c| {
+            serde_json::json!({
+                "name": c.city.name,
+                "resources": c.resources.ressources,
+                "buildings": c.city.buildings.elements.len(),
+                "units": c.city.units.units.len(),
+            })
+        }).collect();
+
+        serde_json::json!({
+            "turn": self.state.turn,
+            "player_turn": self.state.player_turn,
+            "players": players,
+            "seed": self.state.map.seed,
+        })
+    }
+
+    /// Register an AI instance to control the civilization at `civ_index`.
+    pub fn register_ai(&mut self, civ_index: usize, ai: Box<dyn Ai>) {
+        if civ_index >= self.ais.len() {
+            // grow to fit
+            self.ais.resize_with(civ_index + 1, || None);
+        }
+        self.ais[civ_index] = Some(ai);
+    }
+
+    /// Return a list of plausible actions for the civilization index (lowercased strings as used by the parser)
+    pub fn ai_possible_actions(&self, civ_index: usize) -> Vec<String> {
+        let mut actions: Vec<String> = Vec::new();
+        actions.push("end".to_string());
+        for b in &self.state.buildings {
+            actions.push(format!("build {}", b.name.to_lowercase()));
+        }
+        for u in &self.state.units {
+            actions.push(format!("hire {}", u.name.to_lowercase()));
+        }
+        for (i, civ) in self.state.civilizations.iter().enumerate() {
+            if i != civ_index {
+                actions.push(format!("attack {}", civ.city.name.to_lowercase()));
+            }
+        }
+        actions
+    }
+
+    /// Build a lightweight snapshot of the state for AI decision making.
+    pub fn make_ai_view(&self) -> AiView {
+        let players = self.state.civilizations.iter().map(|c| AiPlayerView {
+            name: c.city.name.clone(),
+            resources: c.resources.ressources,
+            buildings: c.city.buildings.elements.len(),
+            units: c.city.units.units.len(),
+        }).collect();
+
+        let buildings = self.state.buildings.iter().map(|b| b.name.clone()).collect();
+        let units = self.state.units.iter().map(|u| u.name.clone()).collect();
+
+        AiView {
+            turn: self.state.turn,
+            player_turn: self.state.player_turn,
+            players,
+            buildings,
+            units,
+            seed: self.state.map.seed.clone(),
+        }
+    }
+
+    /// If the current player is controlled by an AI, make that AI play until it ends its turn.
+    /// This method will repeatedly ask the AI for actions and apply them.
+    pub fn run_ai_for_current_player(&mut self) {
+        // safety cap to avoid infinite loops from buggy AIs
+        const MAX_ACTIONS: usize = 256;
+        let mut actions_done = 0usize;
+
+        loop {
+            if actions_done >= MAX_ACTIONS { break; }
+            let civ_idx = self.state.player_turn;
+            // if there is no AI registered for this civ, stop
+            if civ_idx >= self.ais.len() { break; }
+            if self.ais[civ_idx].is_none() { break; }
+
+            // Only run AI if the civilization is actually flagged AI in the city definition
+            if let Some(civ) = self.state.civilizations.get(civ_idx) {
+                use crate::ast::PlayerType;
+                if !matches!(civ.city.player_type, PlayerType::AI) { break; }
+            } else { break; }
+
+            // build view snapshot
+            let view = self.make_ai_view();
+
+            // ask AI for action
+            let action_opt = {
+                let ai_mut = self.ais[civ_idx].as_mut().unwrap();
+                ai_mut.select_action(&view, civ_idx)
+            };
+
+            if let Some(action) = action_opt {
+                let opened = self.apply_action(&action);
+                if opened {
+                    if let Some(popup) = &self.state.popup {
+                        let popup_clone = popup.clone();
+                        let view2 = self.make_ai_view();
+                        let input = {
+                            let ai_mut = self.ais[civ_idx].as_mut().unwrap();
+                            ai_mut.select_popup_input(&view2, civ_idx, &popup_clone)
+                        };
+                        self.submit_popup_input(&input);
+                    }
+                }
+            } else {
+                self.step();
+            }
+
+            actions_done += 1;
+
+            let new_civ = self.state.player_turn;
+            if new_civ >= self.ais.len() || self.ais[new_civ].is_none() { break; }
         }
     }
 }

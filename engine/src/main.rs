@@ -30,6 +30,10 @@ struct Args {
     /// Dump config blob
     #[arg(long)]
     blob: bool,
+
+    /// Run in headless mode, for automated testing or AI play
+    #[arg(long)]
+    headless: bool,
 }
 
 fn main() -> Result<()> {
@@ -49,7 +53,101 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    // Setup terminal
+    // Load config if provided
+    let mut game = if let Some(config_path) = matches.config {
+        game::Game::from_file(&config_path)?
+    } else if let Some(blob_str) = blob {
+        game::Game::from_string(blob_str)?
+    } else {
+        game::Game::new()
+    };
+
+    // If headless, run a simple stdin-driven loop and avoid initializing terminal or crossterm
+    if matches.headless {
+        use std::io::{BufRead, BufReader};
+        use crate::game::RandomAi;
+        use crate::ast::PlayerType;
+
+        let stdin = std::io::stdin();
+        let reader = BufReader::new(stdin);
+
+        // Register RandomAi for any PlayerType::AI civilizations
+        // First collect indices to avoid borrowing `game` immutably while mutating it
+        let mut ai_indices: Vec<usize> = Vec::new();
+        for (i, civ) in game.state().civilizations.iter().enumerate() {
+            if matches!(civ.city.player_type, crate::ast::PlayerType::AI) {
+                ai_indices.push(i);
+            }
+        }
+        for i in ai_indices {
+            game.register_ai(i, Box::new(RandomAi::new()));
+        }
+
+        // Emit initial snapshot
+        let snap = game.snapshot_value();
+        println!("{}", serde_json::to_string(&snap)?);
+
+        // If current player is AI, run it immediately
+        game.run_ai_for_current_player();
+        println!("{}", serde_json::to_string(&game.snapshot_value())?);
+
+        for line in reader.lines() {
+            let line = line?;
+            let trimmed = line.trim();
+            if trimmed.is_empty() { continue; }
+            let mut parts = trimmed.split_whitespace();
+            match parts.next().unwrap_or("") {
+                "quit" | "exit" => break,
+                "snapshot" => {
+                    let snap = game.snapshot_value();
+                    println!("{}", serde_json::to_string(&snap)?);
+                }
+                "step" => {
+                    game.step();
+                    // after stepping, if new player is AI, run it
+                    game.run_ai_for_current_player();
+                    let snap = game.snapshot_value();
+                    println!("{}", serde_json::to_string(&snap)?);
+                }
+                "apply" => {
+                    // apply rest of line as action
+                    let action = parts.collect::<Vec<&str>>().join(" ");
+                    let opened = game.apply_action(&action);
+                    if opened {
+                        // print snapshot with popup
+                        let mut v = game.snapshot_value();
+                        if let Some(p) = &game.state().popup {
+                            v["popup"] = serde_json::json!({"title": p.title, "prompt": p.prompt, "choices": p.choices});
+                        }
+                        println!("{}", serde_json::to_string(&v)?);
+                    } else {
+                        // action applied; if this caused the player to end and next is AI, run it
+                        game.run_ai_for_current_player();
+                        println!("{}", serde_json::to_string(&game.snapshot_value())?);
+                    }
+                }
+                "popup" => {
+                    // submit popup input (rest of line)
+                    let input = parts.collect::<Vec<&str>>().join(" ");
+                    let _processed = game.submit_popup_input(&input);
+                    // After popup submission, AI may have to act (e.g., popup closed)
+                    game.run_ai_for_current_player();
+                    let snap = game.snapshot_value();
+                    println!("{}", serde_json::to_string(&snap)?);
+                }
+                _ => {
+                    // Unknown command -> respond with a helpful message and snapshot
+                    eprintln!("Unknown command: {}", trimmed);
+                    let snap = game.snapshot_value();
+                    println!("{}", serde_json::to_string(&snap)?);
+                }
+            }
+        }
+
+        return Ok(());
+    }
+
+    // Setup terminal (only for non-headless mode)
     enable_raw_mode().context("failed to enable raw mode")?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen).context("failed to enter alternate screen")?;
@@ -79,15 +177,6 @@ fn main() -> Result<()> {
         cleanup_term(&mut terminal)?;
         return Ok(());
     }
-    
-    // Load config if provided
-    let mut game = if let Some(config_path) = matches.config {
-        game::Game::from_file(&config_path)?
-    } else if let Some(blob_str) = blob {
-        game::Game::from_string(blob_str)?
-    } else {
-        game::Game::new()
-    };
 
     // Game loop
     loop {
