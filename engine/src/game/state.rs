@@ -1,4 +1,4 @@
-use crate::ast::{BuildingDef, BuildingInstanceArray, City, PlayerType, PrereqArray, Production, ProductionType, UnitDef, UnitInstanceArray};
+use crate::ast::{BuildingDef, BuildingInstance, BuildingInstanceArray, City, PlayerType, PrereqArray, Production, ProductionType, UnitDef, UnitInstance, UnitInstanceArray};
 use super::map::GameMap;
 
 #[derive(Debug)]
@@ -39,6 +39,18 @@ pub struct GameState {
     pub resources_spent: u32,
 
     pub zoom_level: u8, // 1, 2, or 3
+    // Action input and popup
+    pub action_editing: bool,
+    pub action_input: String,
+    pub popup: Option<Popup>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Popup {
+    pub title: String,
+    pub prompt: String,
+    pub choices: Vec<String>,
+    pub input: String,
 }
 
 impl GameState {
@@ -94,6 +106,9 @@ impl GameState {
             camera_y: 0,
             camera_mode: false,
             zoom_level: 1,
+            action_editing: false,
+            action_input: String::new(),
+            popup: None,
             buildings: Vec::from([
                 BuildingDef {
                     name: "Farm".to_string(),
@@ -162,6 +177,208 @@ impl GameState {
 
     pub fn toggle_camera_mode(&mut self) {
         self.camera_mode = !self.camera_mode;
+    }
+
+    // Action input helpers
+    pub fn start_action_input(&mut self) {
+        self.action_input.clear();
+        self.action_editing = true;
+    }
+
+    pub fn add_action_char(&mut self, ch: char) {
+        if self.action_editing {
+            self.action_input.push(ch);
+        }
+    }
+
+    pub fn backspace_action(&mut self) {
+        if self.action_editing {
+            self.action_input.pop();
+        }
+    }
+
+    // Open a popup with choices and optional input
+    pub fn open_popup(&mut self, title: &str, prompt: &str, choices: Vec<String>) {
+        self.popup = Some(Popup {
+            title: title.to_string(),
+            prompt: prompt.to_string(),
+            choices,
+            input: String::new(),
+        });
+        // stop editing action while popup is open
+        self.action_editing = false;
+    }
+
+    pub fn close_popup(&mut self) {
+        self.popup = None;
+    }
+
+    // submit the current action text; returns true if a popup was opened for further input
+    pub fn submit_action(&mut self) -> bool {
+        let txt = self.action_input.trim().to_lowercase();
+        if txt.is_empty() {
+            self.action_editing = false;
+            self.action_input.clear();
+            return false;
+        }
+
+        // end turn
+        if txt == "end" || txt == "end turn" {
+            self.player_turn = (self.player_turn + 1) % self.civilizations.len();
+            if self.player_turn == 0 {
+                self.turn += 1;
+            }
+            self.action_input.clear();
+            self.action_editing = false;
+            return false;
+        }
+
+        let parts: Vec<&str> = txt.split_whitespace().collect();
+        match parts.get(0).map(|s| *s) {
+            Some("build") => {
+                // build [type]
+                if parts.len() < 2 {
+                    // open popup to choose building type
+                    let choices = self.buildings.iter().map(|b| b.name.clone()).collect();
+                    self.open_popup("Build", "Choose building type:", choices);
+                    return true;
+                } else {
+                    let bname = parts[1];
+                    if let Some(bdef) = self.buildings.iter().find(|b| b.name.to_lowercase() == bname) {
+                        let civ = &mut self.civilizations[self.player_turn];
+                        if civ.resources.ressources >= bdef.cost as i32 {
+                            civ.resources.ressources -= bdef.cost as i32;
+                            civ.city.buildings.elements.push(BuildingInstance { id_building: bdef.name.clone(), level: 1 });
+                        } else {
+                            self.open_popup("Build", "Not enough resources for building", vec![]);
+                            return true;
+                        }
+                    } else {
+                        self.open_popup("Build", &format!("Unknown building: {}", bname), vec![]);
+                        return true;
+                    }
+                }
+            }
+            Some("hire") | Some("recruit") => {
+                if parts.len() < 2 {
+                    let choices = self.units.iter().map(|u| u.name.clone()).collect();
+                    self.open_popup("Hire", "Choose unit to hire:", choices);
+                    return true;
+                } else {
+                    let uname = parts[1];
+                    if let Some(udef) = self.units.iter().find(|u| u.name.to_lowercase() == uname) {
+                        let civ = &mut self.civilizations[self.player_turn];
+                        // simple cost model: use building production.cost if any else 0; here we just push one unit
+                        civ.city.units.units.push(UnitInstance { id_units: udef.name.clone(), nb_units: 1 });
+                    } else {
+                        self.open_popup("Hire", &format!("Unknown unit: {}", uname), vec![]);
+                        return true;
+                    }
+                }
+            }
+            Some("attack") => {
+                if parts.len() < 2 {
+                    // choose target player
+                    let choices = self.civilizations.iter().enumerate().filter(|(i,_)| *i != self.player_turn).map(|(_,c)| c.city.name.clone()).collect();
+                    self.open_popup("Attack", "Choose player to attack:", choices);
+                    return true;
+                } else {
+                    let target = parts[1];
+                    if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name.to_lowercase() == target) {
+                        let attacker_power = self.calculate_city_power(self.player_turn);
+                        let defender_power = self.calculate_city_power(idx);
+                        if attacker_power > defender_power {
+                            // simple effect: transfer some resources
+                            let stolen = 5;
+                            let taken = stolen.min(self.civilizations[idx].resources.ressources);
+                            self.civilizations[idx].resources.ressources -= taken;
+                            self.civilizations[self.player_turn].resources.ressources += taken;
+                        } else {
+                            // failed attack: lose some resources
+                            let loss = 3.min(self.civilizations[self.player_turn].resources.ressources);
+                            self.civilizations[self.player_turn].resources.ressources -= loss;
+                        }
+                    } else {
+                        self.open_popup("Attack", &format!("Unknown target: {}", target), vec![]);
+                        return true;
+                    }
+                }
+            }
+            _ => {
+                self.open_popup("Action", &format!("Unknown action: {}", txt), vec![]);
+                return true;
+            }
+        }
+
+        // default: clear action
+        self.action_input.clear();
+        self.action_editing = false;
+        false
+    }
+
+    // submit popup input (interpret selection or text)
+    pub fn submit_popup(&mut self) {
+        if self.popup.is_none() { return; }
+        let popup = self.popup.as_ref().unwrap().clone();
+        // if choices exist, try to parse input as index or name
+        if !popup.choices.is_empty() {
+            let sel = popup.input.trim();
+            let mut chosen: Option<String> = None;
+            if let Ok(idx) = sel.parse::<usize>() {
+                if idx >= 1 && idx <= popup.choices.len() {
+                    chosen = Some(popup.choices[idx-1].clone());
+                }
+            }
+            if chosen.is_none() {
+                // try match by name
+                for c in &popup.choices {
+                    if c.to_lowercase().starts_with(&sel.to_lowercase()) {
+                        chosen = Some(c.clone());
+                        break;
+                    }
+                }
+            }
+
+            if let Some(ch) = chosen {
+                // interpret by popup title
+                match popup.title.as_str() {
+                    "Build" => {
+                        if let Some(bdef) = self.buildings.iter().find(|b| b.name == ch) {
+                            let civ = &mut self.civilizations[self.player_turn];
+                            if civ.resources.ressources >= bdef.cost as i32 {
+                                civ.resources.ressources -= bdef.cost as i32;
+                                civ.city.buildings.elements.push(BuildingInstance { id_building: bdef.name.clone(), level: 1 });
+                            }
+                        }
+                    }
+                    "Hire" => {
+                        if let Some(udef) = self.units.iter().find(|u| u.name == ch) {
+                            let civ = &mut self.civilizations[self.player_turn];
+                            civ.city.units.units.push(UnitInstance { id_units: udef.name.clone(), nb_units: 1 });
+                        }
+                    }
+                    "Attack" => {
+                        if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name == ch) {
+                            let attacker_power = self.calculate_city_power(self.player_turn);
+                            let defender_power = self.calculate_city_power(idx);
+                            if attacker_power > defender_power {
+                                let stolen = 5;
+                                let taken = stolen.min(self.civilizations[idx].resources.ressources);
+                                self.civilizations[idx].resources.ressources -= taken;
+                                self.civilizations[self.player_turn].resources.ressources += taken;
+                            } else {
+                                let loss = 3.min(self.civilizations[self.player_turn].resources.ressources);
+                                self.civilizations[self.player_turn].resources.ressources -= loss;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        // close popup after handling
+        self.close_popup();
     }
 
     pub fn move_camera(&mut self, dx: i32, dy: i32) {

@@ -14,6 +14,8 @@ pub enum UiState {
     Normal,
     EditingSeed,
     CameraMode,
+    ActionEditing,
+    PopupOpen,
 }
 
 pub struct Game {
@@ -121,6 +123,11 @@ impl Game {
                         self.state.toggle_camera_mode();
                         self.ui_state = UiState::CameraMode;
                     }
+                    KeyCode::Char('a') => {
+                        // start typing an action
+                        self.state.start_action_input();
+                        self.ui_state = UiState::ActionEditing;
+                    }
                     KeyCode::Char('z') | KeyCode::Char('Z') => {
                         self.state.cycle_zoom();
                     }
@@ -182,6 +189,49 @@ impl Game {
                     }
                     KeyCode::Char('d') | KeyCode::Char('D') => {
                         self.state.move_camera(1, 0);
+                    }
+                    _ => {}
+                }
+            }
+            UiState::ActionEditing => {
+                match key.code {
+                    KeyCode::Enter => {
+                        // submit action, may open a popup
+                        let opened = self.state.submit_action();
+                        self.ui_state = if opened { UiState::PopupOpen } else { UiState::Normal };
+                    }
+                    KeyCode::Esc => {
+                        self.state.action_editing = false;
+                        self.ui_state = UiState::Normal;
+                    }
+                    KeyCode::Backspace => {
+                        self.state.backspace_action();
+                    }
+                    KeyCode::Char(c) => {
+                        self.state.add_action_char(c);
+                    }
+                    _ => {}
+                }
+            }
+            UiState::PopupOpen => {
+                match key.code {
+                    KeyCode::Enter => {
+                        self.state.submit_popup();
+                        self.ui_state = UiState::Normal;
+                    }
+                    KeyCode::Esc => {
+                        self.state.close_popup();
+                        self.ui_state = UiState::Normal;
+                    }
+                    KeyCode::Backspace => {
+                        if let Some(p) = &mut self.state.popup {
+                            p.input.pop();
+                        }
+                    }
+                    KeyCode::Char(c) => {
+                        if let Some(p) = &mut self.state.popup {
+                            p.input.push(c);
+                        }
                     }
                     _ => {}
                 }

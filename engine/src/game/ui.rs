@@ -190,10 +190,18 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
 }
 
 fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    // TODO: use dynamic Action from state (current player)
+    // Show current action input (editable)
+    let action_text = if state.action_editing {
+        format!("{}_", state.action_input)
+    } else if !state.action_input.is_empty() {
+        state.action_input.clone()
+    } else {
+        "(press 'a' to type an action)".to_string()
+    };
+
     let resources = Paragraph::new(format!(
         "{}",
-        "N/A"
+        action_text
     ))
     .block(Block::default()
         .title("Action")
@@ -201,6 +209,43 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
         .border_style(Style::default().fg(ui_config.color))
     );
     frame.render_widget(resources, area);
+
+    // If a popup is open, render a centered overlay on top of everything
+    if let Some(popup) = &state.popup {
+        let full = frame.area();
+        let w = (full.width as u16).saturating_sub(10).min(60);
+        let h = (full.height as u16).saturating_sub(8).min(12);
+        let x = full.x + (full.width.saturating_sub(w) / 2);
+        let y = full.y + (full.height.saturating_sub(h) / 2);
+        let popup_area = Rect { x, y, width: w, height: h };
+
+        // Build lines: prompt, choices, input
+        let mut lines: Vec<Line> = Vec::new();
+        lines.push(Line::from(Span::raw(popup.prompt.clone())));
+        lines.push(Line::from(Span::raw("")));
+        for (i, choice) in popup.choices.iter().enumerate() {
+            lines.push(Line::from(Span::raw(format!("{}. {}", i+1, choice))));
+        }
+        if !popup.choices.is_empty() {
+            lines.push(Line::from(Span::raw("")));
+            lines.push(Line::from(Span::raw(format!("Input: {}_", popup.input))));
+        }
+
+        // Draw a solid background for the popup to ensure it's visible above the map
+        let mut bg_lines: Vec<Line> = Vec::new();
+        let width_usize = popup_area.width as usize;
+        for _ in 0..popup_area.height {
+            let text = " ".repeat(width_usize);
+            let span = Span::styled(text, Style::default().bg(Color::Black));
+            bg_lines.push(Line::from(vec![span]));
+        }
+        let bg_block = Paragraph::new(bg_lines);
+        frame.render_widget(bg_block, popup_area);
+
+        let popup_widget = Paragraph::new(lines)
+            .block(Block::default().title(popup.title.clone()).borders(Borders::ALL).border_style(Style::default().fg(ui_config.color)));
+        frame.render_widget(popup_widget, popup_area);
+    }
 }
 
 pub fn draw_color_test_256(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>) -> anyhow::Result<()> {
