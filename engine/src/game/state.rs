@@ -249,6 +249,9 @@ impl GameState {
             if self.player_turn == 0 {
                 self.turn += 1;
             }
+            // process turn start effects
+            self.on_turn_start(self.player_turn);
+
             self.action_input.clear();
             self.action_editing = false;
             return false;
@@ -464,44 +467,42 @@ impl GameState {
     }
 
     // Called at the start of each turn: decrease timers, finalize constructions/recruits, give resource production
-    pub fn on_turn_start(&mut self) {
-        // resources from resource-producing buildings
-        for civ in &mut self.civilizations {
-            // resource from finished buildings
-            for b_inst in &civ.city.buildings.elements {
-                if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
-                    if format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
-                        civ.resources.ressources += bdef.production.amount as i32;
-                    }
+    pub fn on_turn_start(&mut self, player_index: usize) {
+        let civ = &mut self.civilizations[player_index];
+        // resource from finished buildings
+        for b_inst in &civ.city.buildings.elements {
+            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
+                if format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
+                    civ.resources.ressources += bdef.production.amount as i32;
                 }
             }
+        }
 
-            // process constructions
-            let mut finished_builds: Vec<usize> = Vec::new();
-            for (i, cons) in civ.constructions.iter_mut().enumerate() {
-                if cons.remaining > 0 { cons.remaining -= 1; }
-                if cons.remaining == 0 { finished_builds.push(i); }
-            }
-            // finalize in reverse order to remove by index safely
-            for idx in finished_builds.into_iter().rev() {
-                let cons = civ.constructions.remove(idx);
-                civ.city.buildings.elements.push(BuildingInstance { id_building: cons.id_building, level: 1 });
-            }
+        // process constructions
+        let mut finished_builds: Vec<usize> = Vec::new();
+        for (i, cons) in civ.constructions.iter_mut().enumerate() {
+            if cons.remaining > 0 { cons.remaining -= 1; }
+            if cons.remaining == 0 { finished_builds.push(i); }
+        }
+        // finalize in reverse order to remove by index safely
+        for idx in finished_builds.into_iter().rev() {
+            let cons = civ.constructions.remove(idx);
+            civ.city.buildings.elements.push(BuildingInstance { id_building: cons.id_building, level: 1 });
+        }
 
-            // process recruitments
-            let mut finished_recruits: Vec<usize> = Vec::new();
-            for (i, rec) in civ.recruitments.iter_mut().enumerate() {
-                if rec.remaining > 0 { rec.remaining -= 1; }
-                if rec.remaining == 0 { finished_recruits.push(i); }
-            }
-            for idx in finished_recruits.into_iter().rev() {
-                let rec = civ.recruitments.remove(idx);
-                // add unit instance (merge if existing)
-                if let Some(ui) = civ.city.units.units.iter_mut().find(|u| u.id_units == rec.id_unit) {
-                    ui.nb_units += rec.amount;
-                } else {
-                    civ.city.units.units.push(UnitInstance { id_units: rec.id_unit, nb_units: rec.amount });
-                }
+        // process recruitments
+        let mut finished_recruits: Vec<usize> = Vec::new();
+        for (i, rec) in civ.recruitments.iter_mut().enumerate() {
+            if rec.remaining > 0 { rec.remaining -= 1; }
+            if rec.remaining == 0 { finished_recruits.push(i); }
+        }
+        for idx in finished_recruits.into_iter().rev() {
+            let rec = civ.recruitments.remove(idx);
+            // add unit instance (merge if existing)
+            if let Some(ui) = civ.city.units.units.iter_mut().find(|u| u.id_units == rec.id_unit) {
+                ui.nb_units += rec.amount;
+            } else {
+                civ.city.units.units.push(UnitInstance { id_units: rec.id_unit, nb_units: rec.amount });
             }
         }
         // increment turn counter maybe handled elsewhere; keep turn as-is here
