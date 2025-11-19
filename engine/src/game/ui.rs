@@ -5,6 +5,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
     style::Style,
 };
+use crate::game::map::TileDisplay;
 use crate::game::utils::hsv_to_rgb;
 use super::state::GameState;
 
@@ -59,7 +60,7 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
     let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));
     let start_y = (state.camera_y as usize).min(state.map.height.saturating_sub(visible_height));
 
-    let map_lines: Vec<Line> = state.map.tiles
+    let mut map_lines: Vec<Line> = state.map.tiles
         .iter()
         .skip(start_y)
         .take(visible_height)
@@ -71,7 +72,7 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
                     .take(visible_width)
                     .flat_map(|terrain| {
                         use crate::game::map::TileDisplay;
-                        match terrain.to_style(state.zoom_level) {
+                        match terrain.to_style() {
                             TileDisplay::Single(symbol, color) => {
                                 let style = Style::default().fg(color).bg(color);
                                 (0..zoom).map(move |_| Span::styled(symbol, style)).collect::<Vec<_>>()
@@ -100,6 +101,21 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
             })
         })
         .collect();
+
+    for civ in &state.civilizations {
+        let city = &civ.city;
+
+        for (y, line) in map_lines.iter_mut().enumerate() {
+            for (x, span) in line.iter_mut().enumerate() {
+                if y == city.y as usize && x == city.x as usize {
+                    *span = {
+                        let style = Style::default().fg(Color::Indexed(196)).bg(Color::Indexed(196));
+                        Span::styled("█", style)
+                    };
+                }
+            }
+        }
+    }
 
     let title = if state.camera_mode {
         format!(
