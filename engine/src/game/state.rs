@@ -5,6 +5,9 @@ use super::map::GameMap;
 pub struct Civilization {
     pub resources: Resources,
     pub city: City,
+    // in-progress constructions and recruitments
+    pub constructions: Vec<Construction>,
+    pub recruitments: Vec<Recruitment>,
 }
 
 #[derive(Debug)]
@@ -53,6 +56,20 @@ pub struct Popup {
     pub input: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct Construction {
+    pub id_building: String,
+    pub remaining: u32,
+    pub total: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct Recruitment {
+    pub id_unit: String,
+    pub remaining: u32,
+    pub amount: u32,
+}
+
 impl GameState {
     pub fn new() -> Self {
         Self {
@@ -79,6 +96,8 @@ impl GameState {
                         whitelist_buildings: None,
                         whitelist_units: None,
                     },
+                    constructions: Vec::new(),
+                    recruitments: Vec::new(),
                 },
                 Civilization {
                     resources: Resources { ressources: 100 },
@@ -98,6 +117,8 @@ impl GameState {
                         whitelist_buildings: None,
                         whitelist_units: None,
                     },
+                    constructions: Vec::new(),
+                    recruitments: Vec::new(),
                 }
             ]),
 
@@ -244,19 +265,17 @@ impl GameState {
                     return true;
                 } else {
                     let bname = parts[1];
-                    if let Some(bdef) = self.buildings.iter().find(|b| b.name.to_lowercase() == bname) {
-                        let civ = &mut self.civilizations[self.player_turn];
-                        if civ.resources.ressources >= bdef.cost as i32 {
-                            civ.resources.ressources -= bdef.cost as i32;
-                            civ.city.buildings.elements.push(BuildingInstance { id_building: bdef.name.clone(), level: 1 });
-                        } else {
-                            self.open_popup("Build", "Not enough resources for building", vec![]);
-                            return true;
-                        }
-                    } else {
-                        self.open_popup("Build", &format!("Unknown building: {}", bname), vec![]);
-                        return true;
-                    }
+                            if let Some(bdef) = self.buildings.iter().find(|b| b.name.to_lowercase() == bname) {
+                                // attempt to start construction
+                                let name = bdef.name.clone();
+                                match self.start_construction(self.player_turn, &name) {
+                                    Ok(()) => {}
+                                    Err(err) => { self.open_popup("Build", &err, vec![]); return true; }
+                                }
+                            } else {
+                                self.open_popup("Build", &format!("Unknown building: {}", bname), vec![]);
+                                return true;
+                            }
                 }
             }
             Some("hire") | Some("recruit") => {
@@ -266,14 +285,16 @@ impl GameState {
                     return true;
                 } else {
                     let uname = parts[1];
-                    if let Some(udef) = self.units.iter().find(|u| u.name.to_lowercase() == uname) {
-                        let civ = &mut self.civilizations[self.player_turn];
-                        // simple cost model: use building production.cost if any else 0; here we just push one unit
-                        civ.city.units.units.push(UnitInstance { id_units: udef.name.clone(), nb_units: 1 });
-                    } else {
-                        self.open_popup("Hire", &format!("Unknown unit: {}", uname), vec![]);
-                        return true;
-                    }
+                            if let Some(udef) = self.units.iter().find(|u| u.name.to_lowercase() == uname) {
+                                let uname_owned = udef.name.clone();
+                                match self.start_recruitment(self.player_turn, &uname_owned) {
+                                    Ok(()) => {}
+                                    Err(err) => { self.open_popup("Hire", &err, vec![]); return true; }
+                                }
+                            } else {
+                                self.open_popup("Hire", &format!("Unknown unit: {}", uname), vec![]);
+                                return true;
+                            }
                 }
             }
             Some("attack") => {
@@ -344,17 +365,20 @@ impl GameState {
                 match popup.title.as_str() {
                     "Build" => {
                         if let Some(bdef) = self.buildings.iter().find(|b| b.name == ch) {
-                            let civ = &mut self.civilizations[self.player_turn];
-                            if civ.resources.ressources >= bdef.cost as i32 {
-                                civ.resources.ressources -= bdef.cost as i32;
-                                civ.city.buildings.elements.push(BuildingInstance { id_building: bdef.name.clone(), level: 1 });
+                            let name = bdef.name.clone();
+                            if let Err(err) = self.start_construction(self.player_turn, &name) {
+                                self.open_popup("Build", &err, vec![]);
+                                return;
                             }
                         }
                     }
                     "Hire" => {
                         if let Some(udef) = self.units.iter().find(|u| u.name == ch) {
-                            let civ = &mut self.civilizations[self.player_turn];
-                            civ.city.units.units.push(UnitInstance { id_units: udef.name.clone(), nb_units: 1 });
+                            let name = udef.name.clone();
+                            if let Err(err) = self.start_recruitment(self.player_turn, &name) {
+                                self.open_popup("Hire", &err, vec![]);
+                                return;
+                            }
                         }
                     }
                     "Attack" => {
@@ -382,6 +406,105 @@ impl GameState {
         // reset action input
         self.action_input.clear();
         self.action_editing = false;
+    }
+
+    // Start construction: occupies a building slot immediately, finishes after build_time turns
+    pub fn start_construction(&mut self, civ_index: usize, building_name: &str) -> Result<(), String> {
+        let bdef = match self.buildings.iter().find(|b| b.name == building_name) {
+            Some(b) => b,
+            None => return Err(format!("Unknown building: {}", building_name)),
+        };
+        let civ = &mut self.civilizations[civ_index];
+        let occupied = civ.city.buildings.elements.len() + civ.constructions.len();
+        if occupied >= civ.city.nb_slots_buildings as usize {
+            return Err("No available building slots".to_string());
+        }
+        if civ.resources.ressources < bdef.cost as i32 {
+            return Err("Not enough resources for building".to_string());
+        }
+        civ.resources.ressources -= bdef.cost as i32;
+        civ.constructions.push(Construction { id_building: bdef.name.clone(), remaining: bdef.build_time, total: bdef.build_time });
+        Ok(())
+    }
+
+    // Start recruitment: requires an already-built building that produces this unit
+    pub fn start_recruitment(&mut self, civ_index: usize, unit_name: &str) -> Result<(), String> {
+        let udef = match self.units.iter().find(|u| u.name == unit_name) {
+            Some(u) => u,
+            None => return Err(format!("Unknown unit: {}", unit_name)),
+        };
+        let civ = &mut self.civilizations[civ_index];
+        // check for building that can produce this unit (built only)
+        let mut producer: Option<&BuildingDef> = None;
+        for b_inst in &civ.city.buildings.elements {
+            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
+                if format!("{:?}", bdef.production.prod_type).to_lowercase() == "unit" {
+                    if let Some(prod_id) = &bdef.production.prod_unit_id {
+                        if prod_id == &udef.name { producer = Some(bdef); break; }
+                    }
+                }
+            }
+        }
+        if producer.is_none() {
+            return Err("No building able to produce this unit is present".to_string());
+        }
+        let occupied_units = civ.city.units.units.len() + civ.recruitments.len();
+        if occupied_units >= civ.city.nb_slots_units as usize {
+            return Err("No available unit slots".to_string());
+        }
+        // use producer's production time and cost
+        let bdef = producer.unwrap();
+        let cost = bdef.production.cost as i32;
+        if civ.resources.ressources < cost {
+            return Err("Not enough resources to recruit unit".to_string());
+        }
+        civ.resources.ressources -= cost;
+        civ.recruitments.push(Recruitment { id_unit: udef.name.clone(), remaining: bdef.production.time, amount: 1 });
+        Ok(())
+    }
+
+    // Called at the start of each turn: decrease timers, finalize constructions/recruits, give resource production
+    pub fn on_turn_start(&mut self) {
+        // resources from resource-producing buildings
+        for civ in &mut self.civilizations {
+            // resource from finished buildings
+            for b_inst in &civ.city.buildings.elements {
+                if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
+                    if format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
+                        civ.resources.ressources += bdef.production.amount as i32;
+                    }
+                }
+            }
+
+            // process constructions
+            let mut finished_builds: Vec<usize> = Vec::new();
+            for (i, cons) in civ.constructions.iter_mut().enumerate() {
+                if cons.remaining > 0 { cons.remaining -= 1; }
+                if cons.remaining == 0 { finished_builds.push(i); }
+            }
+            // finalize in reverse order to remove by index safely
+            for idx in finished_builds.into_iter().rev() {
+                let cons = civ.constructions.remove(idx);
+                civ.city.buildings.elements.push(BuildingInstance { id_building: cons.id_building, level: 1 });
+            }
+
+            // process recruitments
+            let mut finished_recruits: Vec<usize> = Vec::new();
+            for (i, rec) in civ.recruitments.iter_mut().enumerate() {
+                if rec.remaining > 0 { rec.remaining -= 1; }
+                if rec.remaining == 0 { finished_recruits.push(i); }
+            }
+            for idx in finished_recruits.into_iter().rev() {
+                let rec = civ.recruitments.remove(idx);
+                // add unit instance (merge if existing)
+                if let Some(ui) = civ.city.units.units.iter_mut().find(|u| u.id_units == rec.id_unit) {
+                    ui.nb_units += rec.amount;
+                } else {
+                    civ.city.units.units.push(UnitInstance { id_units: rec.id_unit, nb_units: rec.amount });
+                }
+            }
+        }
+        // increment turn counter maybe handled elsewhere; keep turn as-is here
     }
 
     pub fn move_camera(&mut self, dx: i32, dy: i32) {

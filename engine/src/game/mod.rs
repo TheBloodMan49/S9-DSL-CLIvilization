@@ -83,6 +83,8 @@ impl Game {
                         state::Civilization {
                             resources: state::Resources { ressources: 100 },
                             city,
+                            constructions: Vec::new(),
+                            recruitments: Vec::new(),
                         }
                     }).collect();
                 }
