@@ -1,3 +1,4 @@
+use std::fmt::{Display, Write};
 use crate::game::utils::hash_tmb;
 use noise::{NoiseFn, Perlin};
 
@@ -92,13 +93,13 @@ impl GameMap {
         let perlin_moisture = Perlin::new(hash_tmb(hash_tmb(seed.clone()).to_string()));
         let scale = 0.1;
 
-        for y in 0..height {
-            for x in 0..width {
+        for (y, line) in tiles.iter_mut().enumerate() {
+            for (x, cell) in line.iter_mut().enumerate() {
                 let elevation = perlin_elevation.get([x as f64 * scale, y as f64 * scale]);
                 let moisture =
                     perlin_moisture.get([x as f64 * scale * 1.5, y as f64 * scale * 1.5]);
 
-                tiles[y][x] = match (elevation, moisture) {
+                *cell = match (elevation, moisture) {
                     (e, _) if e < -0.2 => Terrain::Water,
                     (e, m) if (-0.2..0.3).contains(&e) && m < -0.5 => Terrain::Desert,
                     (e, m) if (-0.2..0.3).contains(&e) && m >= -0.5 => Terrain::Plains,
@@ -121,15 +122,17 @@ impl GameMap {
         let seed = rand::random::<u64>().to_string();
         Self::new(seed, width, height)
     }
+}
 
-    pub fn to_string(&self) -> String {
-        let mut map_str = String::new();
+impl Display for GameMap {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         for row in &self.tiles {
             for terrain in row {
-                map_str.push(terrain.to_char());
+                formatter.write_char(terrain.to_char())?;
             }
-            map_str.push('\n');
+            formatter.write_char('\n')?;
         }
-        map_str
+
+        Ok(())
     }
 }
