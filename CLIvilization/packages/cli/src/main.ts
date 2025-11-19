@@ -3,7 +3,7 @@ import { createClIvilizationServices, CLIvilizationLanguageMetaData } from 'cliv
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { extractAstNode } from './util.js';
-import { generateOutput } from './generator.js';
+import {generateBinary, generateAST} from './generator.js';
 import { NodeFileSystem } from 'langium/node';
 import * as url from 'node:url';
 import * as fs from 'node:fs/promises';
@@ -30,8 +30,23 @@ export const generateAction = async (source: string, destination: string): Promi
     const spinner = yoctoSpinner().start('Generating game executable');
     try {
 
-        const generatedFilePath = await generateOutput(model, source, destination);
+        const generatedFilePath = await generateBinary(model, source, destination);
         spinner.success(`Executable generated successfully: ${generatedFilePath}`)
+    } catch (e) {
+        spinner.error("Generation failed")
+        return;
+    }
+};
+
+export const astAction = async (source: string, destination: string): Promise<void> => {
+    const services = createClIvilizationServices(NodeFileSystem).ClIvilization;
+    const model = await extractAstNode<Model>(source, services);
+
+    const spinner = yoctoSpinner().start('Generating AST file');
+    try {
+
+        const generatedFilePath = await generateAST(model, source, destination);
+        spinner.success(`AST file generated successfully: ${generatedFilePath}`)
     } catch (e) {
         spinner.error("Generation failed")
         return;
@@ -49,8 +64,15 @@ export default function(): void {
         .command('generate')
         .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
         .argument('<destination>', 'destination file')
-        .description('Generates code for a provided source file.')
+        .description('Generates binary for a provided source file.')
         .action(generateAction);
+
+    program
+        .command('ast')
+        .argument('<file>', `source file (possible file extensions: ${fileExtensions})`)
+        .argument('<destination>', 'destination file')
+        .description('Generates AST for a provided source file.')
+        .action(astAction);
 
     program.parse(process.argv);
 }

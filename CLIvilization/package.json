@@ -12,8 +12,11 @@
         "langium:generate": "npm run --workspace packages/language langium:generate",
         "langium:watch": "npm run --workspace packages/language langium:watch",
         "test": "npm run --workspace packages/language test",
-        "json": "npx tsx test.ts",
-        "cli:test": "node packages/cli/bin/cli.js generate ../examples/variant_1/game.civ ../examples/variant_1/out"
+        "cli": "node packages/cli/bin/cli.js",
+        "cli:generate": "node packages/cli/bin/cli.js generate",
+        "cli:generate-test": "node packages/cli/bin/cli.js generate ../examples/variant_1/game.civ ../examples/variant_1/out",
+        "cli:ast": "node packages/cli/bin/cli.js ast",
+        "cli:ast-test": "node packages/cli/bin/cli.js ast ../examples/variant_1/game.civ ../examples/variant_1/out.json"
     },
     "devDependencies": {
         "@types/node": "~20.17.48",
