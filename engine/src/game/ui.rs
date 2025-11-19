@@ -65,7 +65,7 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
         .skip(start_y)
         .take(visible_height)
         .flat_map(|row| {
-            (0..zoom).map(move |line_idx| {
+            (0..zoom).map(|_| {
                 let spans: Vec<Span> = row
                     .iter()
                     .skip(start_x)
@@ -76,23 +76,6 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
                             TileDisplay::Single(symbol, color) => {
                                 let style = Style::default().fg(color).bg(color);
                                 (0..zoom).map(move |_| Span::styled(symbol, style)).collect::<Vec<_>>()
-                            }
-                            TileDisplay::Multi(grid) => {
-                                if line_idx < grid.len() {
-                                    grid[line_idx]
-                                        .iter()
-                                        .map(|(symbol, color)| {
-                                            // Appliquer le fond plaine (70) pour les maisons
-                                            Span::styled(*symbol, Style::default()
-                                                .fg(*color)
-                                                .bg(Color::Indexed(70)))
-                                        })
-                                        .collect::<Vec<_>>()
-                                } else {
-                                    vec![Span::styled("▄", Style::default()
-                                        .fg(Color::Indexed(70))
-                                        .bg(Color::Indexed(70))); zoom]
-                                }
                             }
                         }
                     })
@@ -107,7 +90,7 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
 
         for (y, line) in map_lines.iter_mut().enumerate() {
             for (x, span) in line.iter_mut().enumerate() {
-                if (y + start_y) == city.y as usize && (x + start_x) == city.x as usize {
+                if (y + start_y) == (city.y as usize * zoom) && (x + start_x) == (city.x as usize * zoom) {
                     *span = {
                         let style = Style::default().fg(Color::Indexed(196)).bg(Color::Indexed(196));
                         Span::styled("█", style)

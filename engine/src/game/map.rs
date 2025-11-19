@@ -11,8 +11,7 @@ pub enum Terrain {
 }
 
 pub enum TileDisplay {
-    Single(&'static str, ratatui::style::Color),
-    Multi(Vec<Vec<(&'static str, ratatui::style::Color)>>),
+    Single(&'static str, ratatui::style::Color)
 }
 
 impl Terrain {
@@ -35,7 +34,6 @@ impl Terrain {
     }
 }
 
-//todo: add sprite handling
 #[derive(Clone, Debug)]
 pub struct GameMap {
     pub tiles: Vec<Vec<Terrain>>,
