@@ -615,6 +615,8 @@ impl GameState {
         // compute travel time based on distance and default movespeed 3 per turn
         let a = &self.civilizations[attacker_idx].city;
         let b = &self.civilizations[defender_idx].city;
+
+        // TODO: BFS ? visual ???
         let dx = (a.x as i32 - b.x as i32) as f64;
         let dy = (a.y as i32 - b.y as i32) as f64;
         let dist = (dx * dx + dy * dy).sqrt();
