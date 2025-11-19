@@ -7,13 +7,13 @@
           "x": 5,
           "y": 4,
           "color": "#FFCC00",
-          "startingResources": 15,
-          "playerType": "PLAYER",
-          "nbSlotsBuildings": 2,
+          "starting_resources": 15,
+          "player_type": "PLAYER",
+          "nb_slots_buildings": 2,
           "buildings": {
             "elements": []
           },
-          "nbSlotsUnits": 6,
+          "nb_slots_units": 6,
           "units": {
             "units": []
           }
@@ -23,13 +23,13 @@
           "x": 15,
           "y": 5,
           "color": "#CC0000",
-          "startingResources": 12,
-          "playerType": "AI",
-          "nbSlotsBuildings": 2,
+          "starting_resources": 12,
+          "player_type": "AI",
+          "nb_slots_buildings": 2,
           "buildings": {
             "elements": []
           },
-          "nbSlotsUnits": 6,
+          "nb_slots_units": 6,
           "units": {
             "units": []
           }
@@ -37,26 +37,26 @@
       ]
     },
     {
-      "mapX": 160,
-      "mapY": 40,
-      "currentTurn": 2,
-      "uiColor": "#FF00FF",
+      "map_x": 160,
+      "map_y": 40,
+      "current_turn": 2,
+      "ui_color": "#FF00FF",
       "seed": "Swain"
     },
     {
-      "nbTurns": 120,
-      "resourcesSpent": 1000
+      "nb_turns": 120,
+      "resources_spent": 1000
     },
     {
       "buildings": [
         {
           "name": "tour",
           "cost": 3,
-          "buildTime": 2,
+          "build_time": 2,
           "slots": 1,
           "production": {
-            "prodType": "unit",
-            "prodUnitId": "mele",
+            "prod_type": "UNIT",
+            "prod_unit_id": "mele",
             "amount": 1,
             "time": 2,
             "cost": 2
@@ -68,11 +68,11 @@
         {
           "name": "inhibiteur",
           "cost": 4,
-          "buildTime": 3,
+          "build_time": 3,
           "slots": 1,
           "production": {
-            "prodType": "unit",
-            "prodUnitId": "casteur",
+            "prod_type": "UNIT",
+            "prod_unit_id": "casteur",
             "amount": 1,
             "time": 2,
             "cost": 3

@@ -16,7 +16,8 @@ pub struct Resources {
 pub struct GameState {
     pub map: GameMap,
     pub turn: i32,
-    pub year: i32,
+
+    pub player_turn: usize,
 
     // Civilizations
     pub civilizations: Vec<Civilization>,
@@ -45,7 +46,7 @@ impl GameState {
         Self {
             map: GameMap::new_random(160usize, 40usize),
             turn: 1,
-            year: -2500,
+            player_turn: 0,
 
             civilizations: Vec::from([
                 Civilization {
@@ -199,5 +200,20 @@ impl GameState {
 
         self.camera_x = self.camera_x.clamp(0, self.map.width as i32 - 1);
         self.camera_y = self.camera_y.clamp(0, self.map.height as i32 - 1);
+    }
+
+    pub fn calculate_city_power(&self, civ_index: usize) -> i32 {
+        let civ = &self.civilizations[civ_index];
+        let mut power = 0;
+
+        // Power from units
+        for unit in &civ.city.units.units {
+            let id = &unit.id_units;
+            power += unit.nb_units as i32 * self.units.iter()
+                .find(|u| &u.name == id)
+                .map_or(0, |u| u.attack as i32);
+        }
+
+        power
     }
 }

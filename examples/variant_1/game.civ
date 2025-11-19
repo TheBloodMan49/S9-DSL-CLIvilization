@@ -39,14 +39,14 @@ tour {
     cost=3
     build_time=2
     slots=1
-    production={ type=unit id_units=mele amount=1 time=2 cost=2 }
+    production={ type=UNIT id_units=mele amount=1 time=2 cost=2 }
     prerequisites=[]
 }
 inhibiteur {
     cost=4
     build_time=3
     slots=1
-    production={ type=unit id_units=casteur amount=1 time=2 cost=3 }
+    production={ type=UNIT id_units=casteur amount=1 time=2 cost=3 }
     prerequisites=[]
 }
 

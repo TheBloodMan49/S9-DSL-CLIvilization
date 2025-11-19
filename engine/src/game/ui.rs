@@ -26,14 +26,14 @@ pub fn draw_ui(frame: &mut Frame, state: &GameState, ui_config: &UiConfig) {
 
     draw_status_bar(frame, chunks[0], state, ui_config);
     draw_main_area(frame, chunks[1], state, ui_config);
-    draw_resources_bar(frame, chunks[2], state, ui_config);
+    draw_action(frame, chunks[2], state, ui_config);
 }
 
 fn draw_status_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     let status = Block::default()
         .title(format!(
-            "Civilization {} BC - Turn {} (Press Ctrl+Q to quit)",
-            state.year.abs(),
+            "Civilization {} AC (Turn {}) (Press Ctrl+Q to quit)",
+            state.turn * 10,
             state.turn
         ))
         .borders(Borders::ALL)
@@ -136,17 +136,22 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
 }
 
 fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    // Build seed line with editing indicator
-    let seed_line = if state.seed_editing {
-        format!("Seed: {}{} (Enter to apply)", state.map.seed, "|")
-    } else {
-        format!("Seed: {} (press 's' to edit)", state.map.seed)
-    };
+    let areas = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+        .split(area);
 
+    // Game Info
     let info_text = format!(
-        "Units: 1 Settler\nCities: {}\n\n{}\n",
-        state.civilizations.len(),
-        seed_line
+        "{}\n\nJoueurs: \n{}\n\nTour actuel: {}",
+        format!("Seed: {}", state.map.seed),
+        // List players
+        state.civilizations
+            .iter()
+            .map(|c| format!("- {} ({:?})", c.city.name, c.city.player_type))
+            .collect::<Vec<_>>()
+            .join("\n"),
+        state.civilizations[state.player_turn].city.name
     );
 
     let info = Paragraph::new(info_text)
@@ -155,17 +160,43 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
             .borders(Borders::ALL)
             .border_style(Style::default().fg(ui_config.color))
         );
-    frame.render_widget(info, area);
+    frame.render_widget(info, areas[0]);
+
+    // Player info
+    let player_text = format!(
+        "Ressources: {}\nForce Millitaire: {}\nBatiments: {}\nUnités: {}\n\nActions disponibles:\n{}",
+        state.civilizations[state.player_turn].resources.ressources,
+        state.calculate_city_power(state.player_turn),
+        state.civilizations[state.player_turn].city.buildings.elements.len().to_string()
+            + "/"
+            + &state.civilizations[state.player_turn].city.nb_slots_buildings.to_string(),
+        0,
+        "- Construire Batiment (build)\n- Recruter Unité(hire)\n- Attaquer (attack)\n- Finir Tour (end)"
+    );
+
+    let player = Paragraph::new(player_text)
+        .block(Block::default()
+            .title(
+                format!(
+                    "Jouer - {}",
+                    state.civilizations[state.player_turn].city.name
+                )
+            )
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ui_config.color))
+        );
+    frame.render_widget(player, areas[1]);
+
 }
 
-fn draw_resources_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    // TODO: use dynamic resources from state (current player)
+fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
+    // TODO: use dynamic Action from state (current player)
     let resources = Paragraph::new(format!(
-        "ressources: {}",
-        0
+        "{}",
+        "N/A"
     ))
     .block(Block::default()
-        .title("Resources")
+        .title("Action")
         .borders(Borders::ALL)
         .border_style(Style::default().fg(ui_config.color))
     );

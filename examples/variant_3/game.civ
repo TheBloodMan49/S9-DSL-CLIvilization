@@ -41,14 +41,14 @@ dock {
     cost=3
     build_time=2
     slots=1
-    production={ type=unit id_units=berserker amount=1 time=2 cost=2 }
+    production={ type=UNIT id_units=berserker amount=1 time=2 cost=2 }
     prerequisites=[]
 }
 forge {
     cost=5
     build_time=3
     slots=1
-    production={ type=unit id_units=archer amount=1 time=3 cost=3 }
+    production={ type=UNIT id_units=archer amount=1 time=3 cost=3 }
     prerequisites=[]
 }
 
