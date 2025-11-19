@@ -34,8 +34,8 @@ pub struct GameState {
     pub units: Vec<UnitDef>,
 
     // victory conditions
-    pub nbTurns: u32,
-    pub resourcesSpent: u32,
+    pub nb_turns: u32,
+    pub resources_spent: u32,
 
     pub zoom_level: u8, // 1, 2, or 3
 }
@@ -58,10 +58,10 @@ impl GameState {
                         blacklist_buildings: None,
                         blacklist_units: None,
                         color: "#0000FF".into(),
-                        nbSlotsBuildings: 5,
-                        nbSlotsUnits: 10,
-                        playerType: PlayerType::PLAYER,
-                        startingResources: 40,
+                        nb_slots_buildings: 5,
+                        nb_slots_units: 10,
+                        player_type: PlayerType::PLAYER,
+                        starting_resources: 40,
                         units: UnitInstanceArray { units: Vec::new() },
                         whitelist_buildings: None,
                         whitelist_units: None,
@@ -77,10 +77,10 @@ impl GameState {
                         blacklist_buildings: None,
                         blacklist_units: None,
                         color: "#FF0000".into(),
-                        nbSlotsBuildings: 5,
-                        nbSlotsUnits: 10,
-                        playerType: PlayerType::AI,
-                        startingResources: 40,
+                        nb_slots_buildings: 5,
+                        nb_slots_units: 10,
+                        player_type: PlayerType::AI,
+                        starting_resources: 40,
                         units: UnitInstanceArray { units: Vec::new() },
                         whitelist_buildings: None,
                         whitelist_units: None,
@@ -97,13 +97,13 @@ impl GameState {
                 BuildingDef {
                     name: "Farm".to_string(),
                     cost: 10,
-                    buildTime: 2,
+                    build_time: 2,
                     prerequisites: PrereqArray { prereqs: Vec::new() },
                     production: Production {
                         amount: 5,
                         cost: 0,
-                        prodType: ProductionType::ressource,
-                        prodUnitId: None,
+                        prod_type: ProductionType::RESSOURCE,
+                        prod_unit_id: None,
                         time: 1,
                     },
                     slots: 1,
@@ -111,13 +111,13 @@ impl GameState {
                 BuildingDef {
                     name: "Barracks".to_string(),
                     cost: 20,
-                    buildTime: 4,
+                    build_time: 4,
                     prerequisites: PrereqArray { prereqs: Vec::new() },
                     production: Production {
                         amount: 0,
                         cost: 5,
-                        prodType: ProductionType::unit,
-                        prodUnitId: Some("Warrior".to_string()),
+                        prod_type: ProductionType::UNIT,
+                        prod_unit_id: Some("Warrior".to_string()),
                         time: 3,
                     },
                     slots: 1,
@@ -129,8 +129,8 @@ impl GameState {
                     attack: 1,
                 },
             ]),
-            nbTurns: 500,
-            resourcesSpent: 300,
+            nb_turns: 500,
+            resources_spent: 300,
         }
     }
 

@@ -2,6 +2,7 @@ import { type Module, inject } from 'langium';
 import { createDefaultModule, createDefaultSharedModule, type DefaultSharedModuleContext, type LangiumServices, type LangiumSharedServices, type PartialLangiumServices } from 'langium/lsp';
 import { CLIvilizationGeneratedModule, ClIvilizationGeneratedSharedModule } from './generated/module.js';
 import { ClIvilizationValidator, registerValidationChecks } from './clivilization-validator.js';
+import { SnakeCaseNameProvider } from './snake-case.js';
 
 /**
  * Declaration of custom services - add your own service classes here.
@@ -26,6 +27,9 @@ export type ClIvilizationServices = LangiumServices & ClIvilizationAddedServices
 export const ClIvilizationModule: Module<ClIvilizationServices, PartialLangiumServices & ClIvilizationAddedServices> = {
     validation: {
         ClIvilizationValidator: () => new ClIvilizationValidator()
+    },
+    references: {
+        NameProvider: () => new SnakeCaseNameProvider()
     }
 };
 

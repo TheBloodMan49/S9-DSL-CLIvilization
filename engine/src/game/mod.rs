@@ -56,18 +56,18 @@ impl Game {
             match section {
                 crate::ast::Section::Game(g) => {
                     // ui color
-                    game.ui_config.color = str_to_color(&g.uiColor);
+                    game.ui_config.color = str_to_color(&g.ui_color);
 
                     // map settings
                     let map = map::GameMap::new(
                         g.seed.clone().unwrap_or("pokemon".into()),
-                        g.mapX as usize,
-                        g.mapY as usize,
+                        g.map_x as usize,
+                        g.map_y as usize,
                     );
                     game.state.map = map;
 
                     // current turn
-                    game.state.turn = g.currentTurn as i32;
+                    game.state.turn = g.current_turn as i32;
                 }
                 crate::ast::Section::BuildingDefArray(bda) => {
                     game.state.buildings = bda.buildings;
@@ -85,8 +85,8 @@ impl Game {
                     }).collect();
                 }
                 crate::ast::Section::VictoryConditions(_vc) => {
-                    game.state.nbTurns = _vc.nbTurns;
-                    game.state.resourcesSpent = _vc.resourcesSpent;
+                    game.state.nb_turns = _vc.nb_turns;
+                    game.state.resources_spent = _vc.resources_spent;
                 }
             }
         }

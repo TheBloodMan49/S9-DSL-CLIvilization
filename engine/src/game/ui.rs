@@ -14,7 +14,7 @@ pub struct UiConfig {
 }
 
 pub fn draw_ui(frame: &mut Frame, state: &GameState, ui_config: &UiConfig) {
-    let size = frame.size();
+    let size = frame.area();
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -193,7 +193,7 @@ pub fn draw_color_test_256(terminal: &mut Terminal<CrosstermBackend<std::io::Std
     }
 
     terminal.draw(|f| {
-        let size = f.size();
+        let size = f.area();
         let block = Paragraph::new(lines.clone())
             .block(Block::default().title("Terminal 256-color test (press any key to exit)").borders(Borders::ALL));
         f.render_widget(block, size);
@@ -220,7 +220,7 @@ pub fn draw_color_test_rgb(terminal: &mut Terminal<CrosstermBackend<std::io::Std
     }
 
     terminal.draw(|f| {
-        let size = f.size();
+        let size = f.area();
         let block = Paragraph::new(lines.clone())
             .block(Block::default().title("Terminal RGB-color test (press any key to exit)").borders(Borders::ALL));
         f.render_widget(block, size);

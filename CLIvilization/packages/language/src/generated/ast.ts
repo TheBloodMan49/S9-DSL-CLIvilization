@@ -23,6 +23,8 @@ export type ClIvilizationKeywordNames =
     | "="
     | "AI"
     | "PLAYER"
+    | "RESSOURCE"
+    | "UNIT"
     | "["
     | "[buildings]"
     | "[cities]"
@@ -51,7 +53,6 @@ export type ClIvilizationKeywordNames =
     | "prerequisites"
     | "production"
     | "resources_spent"
-    | "ressource"
     | "seed"
     | "slots"
     | "starting_buildings"
@@ -60,7 +61,6 @@ export type ClIvilizationKeywordNames =
     | "time"
     | "type"
     | "ui_color"
-    | "unit"
     | "whitelist_buildings"
     | "whitelist_units"
     | "x"
@@ -73,7 +73,7 @@ export type ClIvilizationTokenNames = ClIvilizationTerminalNames | ClIvilization
 export interface BuildingDef extends langium.AstNode {
     readonly $container: BuildingDefArray;
     readonly $type: 'BuildingDef';
-    buildTime: number;
+    build_time: number;
     cost: number;
     name: Value;
     prerequisites: PrereqArray;
@@ -83,7 +83,7 @@ export interface BuildingDef extends langium.AstNode {
 
 export const BuildingDef = {
     $type: 'BuildingDef',
-    buildTime: 'buildTime',
+    build_time: 'build_time',
     cost: 'cost',
     name: 'name',
     prerequisites: 'prerequisites',
@@ -165,10 +165,10 @@ export interface City extends langium.AstNode {
     buildings: BuildingInstanceArray;
     color: string;
     name: Value;
-    nbSlotsBuildings: number;
-    nbSlotsUnits: number;
-    playerType: PlayerType;
-    startingResources: number;
+    nb_slots_buildings: number;
+    nb_slots_units: number;
+    player_type: PlayerType;
+    starting_resources: number;
     units: UnitInstanceArray;
     whitelist_buildings?: ValueArray;
     whitelist_units?: ValueArray;
@@ -183,10 +183,10 @@ export const City = {
     buildings: 'buildings',
     color: 'color',
     name: 'name',
-    nbSlotsBuildings: 'nbSlotsBuildings',
-    nbSlotsUnits: 'nbSlotsUnits',
-    playerType: 'playerType',
-    startingResources: 'startingResources',
+    nb_slots_buildings: 'nb_slots_buildings',
+    nb_slots_units: 'nb_slots_units',
+    player_type: 'player_type',
+    starting_resources: 'starting_resources',
     units: 'units',
     whitelist_buildings: 'whitelist_buildings',
     whitelist_units: 'whitelist_units',
@@ -201,20 +201,20 @@ export function isCity(item: unknown): item is City {
 export interface Game extends langium.AstNode {
     readonly $container: Model;
     readonly $type: 'Game';
-    currentTurn: number;
-    mapX: number;
-    mapY: number;
+    current_turn: number;
+    map_x: number;
+    map_y: number;
     seed?: Value;
-    uiColor: string;
+    ui_color: string;
 }
 
 export const Game = {
     $type: 'Game',
-    currentTurn: 'currentTurn',
-    mapX: 'mapX',
-    mapY: 'mapY',
+    current_turn: 'current_turn',
+    map_x: 'map_x',
+    map_y: 'map_y',
     seed: 'seed',
-    uiColor: 'uiColor'
+    ui_color: 'ui_color'
 } as const;
 
 export function isGame(item: unknown): item is Game {
@@ -290,8 +290,8 @@ export interface Production extends langium.AstNode {
     readonly $type: 'Production';
     amount: number;
     cost: number;
-    prodType: ProductionType;
-    prodUnitId?: Value;
+    prod_type: ProductionType;
+    prod_unit_id?: Value;
     time: number;
 }
 
@@ -299,8 +299,8 @@ export const Production = {
     $type: 'Production',
     amount: 'amount',
     cost: 'cost',
-    prodType: 'prodType',
-    prodUnitId: 'prodUnitId',
+    prod_type: 'prod_type',
+    prod_unit_id: 'prod_unit_id',
     time: 'time'
 } as const;
 
@@ -308,10 +308,10 @@ export function isProduction(item: unknown): item is Production {
     return reflection.isInstance(item, Production.$type);
 }
 
-export type ProductionType = 'ressource' | 'unit';
+export type ProductionType = 'RESSOURCE' | 'UNIT';
 
 export function isProductionType(item: unknown): item is ProductionType {
-    return item === 'unit' || item === 'ressource';
+    return item === 'UNIT' || item === 'RESSOURCE';
 }
 
 export type Section = BuildingDefArray | Cities | Game | UnitDefArray | VictoryConditions;
@@ -412,14 +412,14 @@ export function isValueArray(item: unknown): item is ValueArray {
 export interface VictoryConditions extends langium.AstNode {
     readonly $container: Model;
     readonly $type: 'VictoryConditions';
-    nbTurns: number;
-    resourcesSpent: number;
+    nb_turns: number;
+    resources_spent: number;
 }
 
 export const VictoryConditions = {
     $type: 'VictoryConditions',
-    nbTurns: 'nbTurns',
-    resourcesSpent: 'resourcesSpent'
+    nb_turns: 'nb_turns',
+    resources_spent: 'resources_spent'
 } as const;
 
 export function isVictoryConditions(item: unknown): item is VictoryConditions {
@@ -453,8 +453,8 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
         BuildingDef: {
             name: BuildingDef.$type,
             properties: {
-                buildTime: {
-                    name: BuildingDef.buildTime
+                build_time: {
+                    name: BuildingDef.build_time
                 },
                 cost: {
                     name: BuildingDef.cost
@@ -534,17 +534,17 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
                 name: {
                     name: City.name
                 },
-                nbSlotsBuildings: {
-                    name: City.nbSlotsBuildings
+                nb_slots_buildings: {
+                    name: City.nb_slots_buildings
                 },
-                nbSlotsUnits: {
-                    name: City.nbSlotsUnits
+                nb_slots_units: {
+                    name: City.nb_slots_units
                 },
-                playerType: {
-                    name: City.playerType
+                player_type: {
+                    name: City.player_type
                 },
-                startingResources: {
-                    name: City.startingResources
+                starting_resources: {
+                    name: City.starting_resources
                 },
                 units: {
                     name: City.units
@@ -567,20 +567,20 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
         Game: {
             name: Game.$type,
             properties: {
-                currentTurn: {
-                    name: Game.currentTurn
+                current_turn: {
+                    name: Game.current_turn
                 },
-                mapX: {
-                    name: Game.mapX
+                map_x: {
+                    name: Game.map_x
                 },
-                mapY: {
-                    name: Game.mapY
+                map_y: {
+                    name: Game.map_y
                 },
                 seed: {
                     name: Game.seed
                 },
-                uiColor: {
-                    name: Game.uiColor
+                ui_color: {
+                    name: Game.ui_color
                 }
             },
             superTypes: [Section.$type]
@@ -633,11 +633,11 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
                 cost: {
                     name: Production.cost
                 },
-                prodType: {
-                    name: Production.prodType
+                prod_type: {
+                    name: Production.prod_type
                 },
-                prodUnitId: {
-                    name: Production.prodUnitId
+                prod_unit_id: {
+                    name: Production.prod_unit_id
                 },
                 time: {
                     name: Production.time
@@ -708,11 +708,11 @@ export class ClIvilizationAstReflection extends langium.AbstractAstReflection {
         VictoryConditions: {
             name: VictoryConditions.$type,
             properties: {
-                nbTurns: {
-                    name: VictoryConditions.nbTurns
+                nb_turns: {
+                    name: VictoryConditions.nb_turns
                 },
-                resourcesSpent: {
-                    name: VictoryConditions.resourcesSpent
+                resources_spent: {
+                    name: VictoryConditions.resources_spent
                 }
             },
             superTypes: [Section.$type]

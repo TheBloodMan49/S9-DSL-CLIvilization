@@ -212,7 +212,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "startingResources",
+            "feature": "starting_resources",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -232,7 +232,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "playerType",
+            "feature": "player_type",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -252,7 +252,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "nbSlotsBuildings",
+            "feature": "nb_slots_buildings",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -344,7 +344,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "nbSlotsUnits",
+            "feature": "nb_slots_units",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -717,7 +717,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "mapX",
+            "feature": "map_x",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -737,7 +737,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "mapY",
+            "feature": "map_y",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -757,7 +757,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "currentTurn",
+            "feature": "current_turn",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -777,7 +777,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "uiColor",
+            "feature": "ui_color",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -839,7 +839,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "nbTurns",
+            "feature": "nb_turns",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -859,7 +859,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "resourcesSpent",
+            "feature": "resources_spent",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -974,7 +974,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "buildTime",
+            "feature": "build_time",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -1074,7 +1074,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
           },
           {
             "$type": "Assignment",
-            "feature": "prodType",
+            "feature": "prod_type",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -1097,7 +1097,7 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
               },
               {
                 "$type": "Assignment",
-                "feature": "prodUnitId",
+                "feature": "prod_unit_id",
                 "operator": "=",
                 "terminal": {
                   "$type": "RuleCall",
@@ -1189,11 +1189,11 @@ export const CLIvilizationGrammar = (): Grammar => loadedCLIvilizationGrammar ??
         "elements": [
           {
             "$type": "Keyword",
-            "value": "unit"
+            "value": "UNIT"
           },
           {
             "$type": "Keyword",
-            "value": "ressource"
+            "value": "RESSOURCE"
           }
         ]
       },

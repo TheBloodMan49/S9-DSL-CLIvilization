@@ -16,13 +16,13 @@ City:
         'x' '=' x=INT
         'y' '=' y=INT
         'color' '=' color=COLOR
-        'starting_resources' '=' startingResources=INT
-        'player_type' '=' playerType=PlayerType
-        'nb_slots_buildings' '=' nbSlotsBuildings=INT
+        'starting_resources' '=' starting_resources=INT
+        'player_type' '=' player_type=PlayerType
+        'nb_slots_buildings' '=' nb_slots_buildings=INT
         'starting_buildings' '=' buildings=BuildingInstanceArray
         ('blacklist_buildings' '=' blacklist_buildings=ValueArray)?
         ('whitelist_buildings' '=' whitelist_buildings=ValueArray)?
-        'nb_slots_units' '=' nbSlotsUnits=INT
+        'nb_slots_units' '=' nb_slots_units=INT
         'starting_units' '=' units=UnitInstanceArray
         ('blacklist_units' '=' blacklist_units=ValueArray)?
         ('whitelist_units' '=' whitelist_units=ValueArray)?
@@ -56,17 +56,17 @@ UnitInstance:
 
 Game:
     '[game]'
-    'map_x' '=' mapX=INT
-    'map_y' '=' mapY=INT
-    'current_turn' '=' currentTurn=INT
-    'ui_color' '=' uiColor=COLOR
+    'map_x' '=' map_x=INT
+    'map_y' '=' map_y=INT
+    'current_turn' '=' current_turn=INT
+    'ui_color' '=' ui_color=COLOR
     ('seed' '=' seed=Value)?
 ;
 
 VictoryConditions:
     '[victory_conditions]'
-    'nb_turns' '=' nbTurns=INT
-    'resources_spent' '=' resourcesSpent=INT
+    'nb_turns' '=' nb_turns=INT
+    'resources_spent' '=' resources_spent=INT
 ;
 
 BuildingDefArray:
@@ -75,7 +75,7 @@ BuildingDefArray:
 BuildingDef:
     name=Value '{'
         'cost' '=' cost=INT
-        'build_time' '=' buildTime=INT
+        'build_time' '=' build_time=INT
         'slots' '=' slots=INT
         'production' '=' production=Production
         'prerequisites' '=' prerequisites=PrereqArray
@@ -84,8 +84,8 @@ BuildingDef:
 
 Production:
     '{'
-        'type' '=' prodType=ProductionType
-        ('id_units' '=' prodUnitId=Value)?
+        'type' '=' prod_type=ProductionType
+        ('id_units' '=' prod_unit_id=Value)?
         'amount' '=' amount=INT
         'time' '=' time=INT
         'cost' '=' cost=INT
@@ -93,7 +93,7 @@ Production:
 ;
 
 ProductionType returns string:
-    "unit" | "ressource" ;
+    'UNIT' | 'RESSOURCE' ;
 
 PrereqArray:
     '[' (prereqs+=Prereq (',' prereqs+=Prereq)*)? ']'
