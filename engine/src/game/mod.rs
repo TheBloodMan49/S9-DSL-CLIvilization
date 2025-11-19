@@ -52,18 +52,42 @@ impl Game {
         let mut game = Game::new();
 
         // Walk sections and apply relevant settings (only Game section is needed for now)
-        for section in model.sections {
-            if let crate::ast::Section::Game(g) = section {
-                // ui color
-                game.ui_config.color = str_to_color(&g.uiColor);
+        for section in model.sections.into_iter() {
+            match section {
+                crate::ast::Section::Game(g) => {
+                    // ui color
+                    game.ui_config.color = str_to_color(&g.uiColor);
 
-                // map settings
-                let map = map::GameMap::new(
-                    g.seed.unwrap_or("pokemon".into()),
-                    g.mapX as usize,
-                    g.mapY as usize,
-                );
-                game.state.map = map;
+                    // map settings
+                    let map = map::GameMap::new(
+                        g.seed.clone().unwrap_or("pokemon".into()),
+                        g.mapX as usize,
+                        g.mapY as usize,
+                    );
+                    game.state.map = map;
+
+                    // current turn
+                    game.state.turn = g.currentTurn as i32;
+                }
+                crate::ast::Section::BuildingDefArray(bda) => {
+                    game.state.buildings = bda.buildings;
+                }
+                crate::ast::Section::UnitDefArray(uda) => {
+                    game.state.units = uda.units;
+                }
+                crate::ast::Section::Cities(cities) => {
+                    // Load cities into civilizations
+                    game.state.civilizations = cities.cities.into_iter().map(|city| {
+                        state::Civilization {
+                            resources: state::Resources { ressources: 100 },
+                            city,
+                        }
+                    }).collect();
+                }
+                crate::ast::Section::VictoryConditions(_vc) => {
+                    game.state.nbTurns = _vc.nbTurns;
+                    game.state.resourcesSpent = _vc.resourcesSpent;
+                }
             }
         }
 
