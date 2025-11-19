@@ -5,6 +5,7 @@ use super::map::GameMap;
 pub struct Civilization {
     pub resources: Resources,
     pub city: City,
+    pub alive: bool,
     // in-progress constructions and recruitments
     pub constructions: Vec<Construction>,
     pub recruitments: Vec<Recruitment>,
@@ -46,6 +47,10 @@ pub struct GameState {
     pub action_editing: bool,
     pub action_input: String,
     pub popup: Option<Popup>,
+    // active travels (attacks in transit)
+    pub travels: Vec<Travel>,
+    // game over flag
+    pub game_over: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +73,15 @@ pub struct Recruitment {
     pub id_unit: String,
     pub remaining: u32,
     pub amount: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct Travel {
+    pub attacker: usize,
+    pub defender: usize,
+    pub amount: u32,
+    pub remaining: u32,
+    pub total: u32,
 }
 
 impl GameState {
@@ -96,6 +110,7 @@ impl GameState {
                         whitelist_buildings: None,
                         whitelist_units: None,
                     },
+                    alive: true,
                     constructions: Vec::new(),
                     recruitments: Vec::new(),
                 },
@@ -117,6 +132,7 @@ impl GameState {
                         whitelist_buildings: None,
                         whitelist_units: None,
                     },
+                    alive: true,
                     constructions: Vec::new(),
                     recruitments: Vec::new(),
                 }
@@ -130,6 +146,8 @@ impl GameState {
             action_editing: false,
             action_input: String::new(),
             popup: None,
+            travels: Vec::new(),
+            game_over: false,
             buildings: Vec::from([
                 BuildingDef {
                     name: "Farm".to_string(),
@@ -309,18 +327,11 @@ impl GameState {
                 } else {
                     let target = parts[1];
                     if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name.to_lowercase() == target) {
-                        let attacker_power = self.calculate_city_power(self.player_turn);
-                        let defender_power = self.calculate_city_power(idx);
-                        if attacker_power > defender_power {
-                            // simple effect: transfer some resources
-                            let stolen = 5;
-                            let taken = stolen.min(self.civilizations[idx].resources.ressources);
-                            self.civilizations[idx].resources.ressources -= taken;
-                            self.civilizations[self.player_turn].resources.ressources += taken;
-                        } else {
-                            // failed attack: lose some resources
-                            let loss = 3.min(self.civilizations[self.player_turn].resources.ressources);
-                            self.civilizations[self.player_turn].resources.ressources -= loss;
+                        // optional amount as third argument
+                        let amount = if parts.len() >= 3 { parts[2].parse::<u32>().ok() } else { None };
+                        match self.start_attack(self.player_turn, idx, amount) {
+                            Ok(()) => {}
+                            Err(e) => { self.open_popup("Attack", &e, vec![]); return true; }
                         }
                     } else {
                         self.open_popup("Attack", &format!("Unknown target: {}", target), vec![]);
@@ -386,16 +397,9 @@ impl GameState {
                     }
                     "Attack" => {
                         if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name == ch) {
-                            let attacker_power = self.calculate_city_power(self.player_turn);
-                            let defender_power = self.calculate_city_power(idx);
-                            if attacker_power > defender_power {
-                                let stolen = 5;
-                                let taken = stolen.min(self.civilizations[idx].resources.ressources);
-                                self.civilizations[idx].resources.ressources -= taken;
-                                self.civilizations[self.player_turn].resources.ressources += taken;
-                            } else {
-                                let loss = 3.min(self.civilizations[self.player_turn].resources.ressources);
-                                self.civilizations[self.player_turn].resources.ressources -= loss;
+                            if let Err(e) = self.start_attack(self.player_turn, idx, None) {
+                                self.open_popup("Attack", &e, vec![]);
+                                return;
                             }
                         }
                     }
@@ -522,7 +526,104 @@ impl GameState {
                 civ.city.units.units.push(UnitInstance { id_units: rec.id_unit, nb_units: rec.amount });
             }
         }
+        // process travels (attacks in transit)
+        let mut arrived: Vec<usize> = Vec::new();
+        for (i, t) in self.travels.iter_mut().enumerate() {
+            if t.remaining > 0 { t.remaining -= 1; }
+            if t.remaining == 0 { arrived.push(i); }
+        }
+        for idx in arrived.into_iter().rev() {
+            let t = self.travels.remove(idx);
+            // if either side is already dead, ignore
+            if !self.civilizations[t.attacker].alive || !self.civilizations[t.defender].alive { continue; }
+
+            let attacker_power = t.amount as i32;
+            let defender_power = self.calculate_city_power(t.defender);
+
+            if attacker_power > defender_power {
+                // attacker wins: defender loses the game
+                self.civilizations[t.defender].alive = false;
+                // remove all defender units
+                self.civilizations[t.defender].city.units.units.clear();
+                // feedback popup
+                self.open_popup("Battle", &format!("{} attacked {} ({} vs {}) — defender eliminated", self.civilizations[t.attacker].city.name, self.civilizations[t.defender].city.name, attacker_power, defender_power), vec![]);
+            } else {
+                // defender holds: attacker units are lost (they were removed when sent); defender loses some units as casualties
+                let casualties = (attacker_power as u32) / 2;
+                let lost = self.remove_units_from_city(t.defender, casualties);
+                self.open_popup("Battle", &format!("{} attacked {} ({} vs {}) — attack failed, defender lost {} units", self.civilizations[t.attacker].city.name, self.civilizations[t.defender].city.name, attacker_power, defender_power, lost), vec![]);
+            }
+        }
+
+        // check victory: if only one alive remains, end game
+        let alive_count = self.civilizations.iter().filter(|c| c.alive).count();
+        if alive_count <= 1 && !self.game_over {
+            self.game_over = true;
+            if let Some(winner) = self.civilizations.iter().find(|c| c.alive) {
+                self.open_popup("Game Over", &format!("Winner: {}", winner.city.name), vec![]);
+            } else {
+                self.open_popup("Game Over", "No winners", vec![]);
+            }
+        }
         // increment turn counter maybe handled elsewhere; keep turn as-is here
+    }
+
+    // Remove up to `to_remove` units from a civilization's city (from unit instances), returning how many were actually removed
+    fn remove_units_from_city(&mut self, civ_index: usize, mut to_remove: u32) -> u32 {
+        let civ = &mut self.civilizations[civ_index];
+        let mut removed: u32 = 0;
+        let mut i = 0;
+        while i < civ.city.units.units.len() && to_remove > 0 {
+            let available: u32 = civ.city.units.units[i].nb_units as u32;
+            if available <= to_remove {
+                removed += available;
+                to_remove -= available;
+                civ.city.units.units.remove(i);
+                // do not increment i since we removed current
+            } else {
+                civ.city.units.units[i].nb_units = (available - to_remove) as u32;
+                removed += to_remove;
+                to_remove = 0;
+                i += 1;
+            }
+        }
+        removed
+    }
+
+    // Start an attack: send units from attacker to defender, they will be in travel for several turns
+    pub fn start_attack(&mut self, attacker_idx: usize, defender_idx: usize, amount_opt: Option<u32>) -> Result<(), String> {
+        if attacker_idx >= self.civilizations.len() || defender_idx >= self.civilizations.len() {
+            return Err("Invalid civilization index".to_string());
+        }
+        if attacker_idx == defender_idx { return Err("Cannot attack yourself".to_string()); }
+        if self.game_over { return Err("Game is over".to_string()); }
+
+        if !self.civilizations[attacker_idx].alive { return Err("Attacker is not alive".to_string()); }
+        if !self.civilizations[defender_idx].alive { return Err("Target is already defeated".to_string()); }
+
+        // count available units
+        let total_units: u32 = self.civilizations[attacker_idx].city.units.units.iter().map(|u| u.nb_units as u32).sum();
+        if total_units == 0 { return Err("No units available to send".to_string()); }
+
+        let send_amount = amount_opt.unwrap_or(total_units).min(total_units);
+        if send_amount == 0 { return Err("Invalid amount to send".to_string()); }
+
+        // remove units from attacker immediately (they are now in transit)
+        let removed = self.remove_units_from_city(attacker_idx, send_amount);
+        if removed == 0 { return Err("Failed to remove units".to_string()); }
+
+        // compute travel time based on distance and default movespeed 3 per turn
+        let a = &self.civilizations[attacker_idx].city;
+        let b = &self.civilizations[defender_idx].city;
+        let dx = (a.x as i32 - b.x as i32) as f64;
+        let dy = (a.y as i32 - b.y as i32) as f64;
+        let dist = (dx * dx + dy * dy).sqrt();
+        let movespeed = 3.0_f64;
+        let mut turns = (dist / movespeed).ceil() as u32;
+        if turns == 0 { turns = 1; }
+
+        self.travels.push(Travel { attacker: attacker_idx, defender: defender_idx, amount: removed, remaining: turns, total: turns });
+        Ok(())
     }
 
     pub fn move_camera(&mut self, dx: i32, dy: i32) {

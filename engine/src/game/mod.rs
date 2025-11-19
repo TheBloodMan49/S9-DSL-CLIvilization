@@ -83,6 +83,7 @@ impl Game {
                         state::Civilization {
                             resources: state::Resources { ressources: 100 },
                             city,
+                            alive: true,
                             constructions: Vec::new(),
                             recruitments: Vec::new(),
                         }
