@@ -236,13 +236,25 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
         let width_usize = popup_area.width as usize;
         for _ in 0..popup_area.height {
             let text = " ".repeat(width_usize);
-            let span = Span::styled(text, Style::default().bg(Color::Black));
+            let span = Span::styled(text, Style::default().bg(Color::Black).fg(Color::White));
             bg_lines.push(Line::from(vec![span]));
         }
         let bg_block = Paragraph::new(bg_lines);
         frame.render_widget(bg_block, popup_area);
+        // Build styled lines for popup content (force white on black so map colors don't bleed)
+        let mut styled_lines: Vec<Line> = Vec::new();
+        styled_lines.push(Line::from(Span::styled(popup.prompt.clone(), Style::default().fg(Color::White).bg(Color::Black))));
+        styled_lines.push(Line::from(Span::styled(String::new(), Style::default().fg(Color::White).bg(Color::Black))));
+        for (i, choice) in popup.choices.iter().enumerate() {
+            let text = format!("{}. {}", i+1, choice);
+            styled_lines.push(Line::from(Span::styled(text, Style::default().fg(Color::White).bg(Color::Black))));
+        }
+        if !popup.choices.is_empty() {
+            styled_lines.push(Line::from(Span::styled(String::new(), Style::default().fg(Color::White).bg(Color::Black))));
+            styled_lines.push(Line::from(Span::styled(format!("Input: {}_", popup.input), Style::default().fg(Color::White).bg(Color::Black))));
+        }
 
-        let popup_widget = Paragraph::new(lines)
+        let popup_widget = Paragraph::new(styled_lines)
             .block(Block::default().title(popup.title.clone()).borders(Borders::ALL).border_style(Style::default().fg(ui_config.color)));
         frame.render_widget(popup_widget, popup_area);
     }
