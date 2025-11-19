@@ -379,6 +379,9 @@ impl GameState {
 
         // close popup after handling
         self.close_popup();
+        // reset action input
+        self.action_input.clear();
+        self.action_editing = false;
     }
 
     pub fn move_camera(&mut self, dx: i32, dy: i32) {
