@@ -163,15 +163,39 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
     frame.render_widget(info, areas[0]);
 
     // Player info
+    // Build a string describing current constructions (or "Aucun")
+    let constructions_text = if !state.civilizations[state.player_turn].constructions.is_empty() {
+        state.civilizations[state.player_turn]
+            .constructions
+            .iter()
+            .map(|construction| {
+                let building_name = state
+                    .buildings
+                    .iter()
+                    .find(|u| &u.name == &construction.id_building)
+                    .map(|u| u.name.clone())
+                    .unwrap_or(construction.id_building.clone());
+                format!("- {} ({} tours restants)", building_name, construction.remaining)
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        "Aucun".to_string()
+    };
+
     let player_text = format!(
-        "Ressources: {}\nForce Millitaire: {}\nBatiments: {}\nUnités: {}\n\nActions disponibles:\n{}",
+        "Ressources: {}\nForce Millitaire: {}\nBatiments: {}\nUnités: {}\n\nActions disponibles:\n{}\n\nBatiment en construction: \n{}",
         state.civilizations[state.player_turn].resources.ressources,
         state.calculate_city_power(state.player_turn),
         state.civilizations[state.player_turn].city.buildings.elements.len().to_string()
             + "/"
-            + &state.civilizations[state.player_turn].city.nb_slots_buildings.to_string(),
+            + &state.civilizations[state.player_turn].city.nb_slots_buildings.to_string()
+            + "\n- "
+            + &state.civilizations[state.player_turn].constructions.len().to_string()
+            + " en construction",
         0,
-        "- Construire Batiment (build)\n- Recruter Unité(hire)\n- Attaquer (attack)\n- Finir Tour (end)"
+        "- Construire Batiment (build)\n- Recruter Unité(hire)\n- Attaquer (attack)\n- Finir Tour (end)",
+        constructions_text
     );
 
     let player = Paragraph::new(player_text)
