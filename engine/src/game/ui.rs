@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph},
     style::Style,
 };
-use crate::game::map::TileDisplay;
+use crate::game::map::draw_map;
 use crate::game::utils::hsv_to_rgb;
 use super::state::GameState;
 
@@ -49,90 +49,6 @@ fn draw_main_area(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &
 
     draw_map(frame, areas[0], state, ui_config);
     draw_info_panel(frame, areas[1], state, ui_config);
-}
-
-fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    let zoom = state.zoom_level as usize;
-
-    let visible_width = ((area.width as usize).saturating_sub(2) / zoom).min(state.map.width);
-    let visible_height = ((area.height as usize).saturating_sub(2) / zoom).min(state.map.height);
-
-    let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));
-    let start_y = (state.camera_y as usize).min(state.map.height.saturating_sub(visible_height));
-
-    let mut map_lines: Vec<Line> = state.map.tiles
-        .iter()
-        .skip(start_y)
-        .take(visible_height)
-        .flat_map(|row| {
-            (0..zoom).map(|_| {
-                let spans: Vec<Span> = row
-                    .iter()
-                    .skip(start_x)
-                    .take(visible_width)
-                    .flat_map(|terrain| {
-                        use crate::game::map::TileDisplay;
-                        match terrain.to_style() {
-                            TileDisplay::Single(symbol, color) => {
-                                let style = Style::default().fg(color).bg(color);
-                                (0..zoom).map(move |_| Span::styled(symbol, style)).collect::<Vec<_>>()
-                            }
-                        }
-                    })
-                    .collect();
-                Line::from(spans)
-            })
-        })
-        .collect();
-
-    for civ in &state.civilizations {
-        let city = &civ.city;
-
-        // Position de la ville en tuiles relatives à la zone visible
-        let city_tile_x = city.x as usize;
-        let city_tile_y = city.y as usize;
-
-        // Vérifier si la ville est dans la zone visible
-        if city_tile_x >= start_x && city_tile_x < start_x + visible_width &&
-            city_tile_y >= start_y && city_tile_y < start_y + visible_height {
-
-            // Convertir la position de la tuile en position pixel dans map_lines
-            let pixel_y_start = (city_tile_y - start_y) * zoom;
-            let pixel_x_start = (city_tile_x - start_x) * zoom;
-
-            // Dessiner la ville sur zoom x zoom pixels
-            for dy in 0..zoom {
-                if pixel_y_start + dy < map_lines.len() {
-                    let line = &mut map_lines[pixel_y_start + dy];
-                    for dx in 0..zoom {
-                        if pixel_x_start + dx < line.spans.len() {
-                            let style = Style::default().fg(Color::Indexed(196)).bg(Color::Indexed(196));
-                            line.spans[pixel_x_start + dx] = Span::styled("█", style);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    let title = if state.camera_mode {
-        format!(
-            "Map (Camera Mode - Position: {},{} - Zoom: {}x) - Press 'v' or Esc to exit",
-            state.camera_x, state.camera_y, state.zoom_level
-        )
-    } else {
-        format!("Map (Press 'v' for camera, 'z' to zoom - Zoom: {}x)", state.zoom_level)
-    };
-
-    // apply ui_config.color to the map widget border
-    let map_widget = Paragraph::new(map_lines)
-        .block(
-            Block::default()
-                .title(title)
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(ui_config.color))
-        );
-    frame.render_widget(map_widget, area);
 }
 
 fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {

@@ -1,6 +1,12 @@
-use std::fmt::{Display, Write};
-use crate::game::utils::hash_tmb;
+use crate::game::state::GameState;
+use crate::game::ui::UiConfig;
+use crate::game::utils::{hash_tmb, str_to_color};
 use noise::{NoiseFn, Perlin};
+use ratatui::Frame;
+use ratatui::layout::Rect;
+use ratatui::prelude::{Color, Line, Span, Style};
+use ratatui::widgets::{Block, Borders, Paragraph};
+use std::fmt::{Display, Write};
 
 #[derive(Clone, Debug)]
 pub enum Terrain {
@@ -10,17 +16,13 @@ pub enum Terrain {
     Mountain,
 }
 
-pub enum TileDisplay {
-    Single(&'static str, ratatui::style::Color)
-}
-
 impl Terrain {
-    pub fn to_style(&self) -> TileDisplay {
+    pub fn to_style(&self) -> Color {
         match self {
-            Terrain::Water => TileDisplay::Single("▄", ratatui::style::Color::Indexed(26)),
-            Terrain::Plains => TileDisplay::Single("▄", ratatui::style::Color::Indexed(70)),
-            Terrain::Desert => TileDisplay::Single("▄", ratatui::style::Color::Indexed(220)),
-            Terrain::Mountain => TileDisplay::Single("▄", ratatui::style::Color::Indexed(250)),
+            Terrain::Water => Color::Indexed(26),
+            Terrain::Plains => Color::Indexed(70),
+            Terrain::Desert => Color::Indexed(220),
+            Terrain::Mountain => Color::Indexed(250),
         }
     }
 
@@ -92,4 +94,91 @@ impl Display for GameMap {
 
         Ok(())
     }
+}
+
+pub fn generate_map_buffer(state: &GameState) -> Vec<Vec<Color>> {
+    if let Some(buffer) = &state.map_buffer_cache {
+        buffer.clone()
+    } else {
+        let mut map_buffer: Vec<Vec<Color>> = state
+            .map
+            .tiles
+            .iter()
+            .map(|line| line.iter().map(|terrain| terrain.to_style()).collect())
+            .collect();
+
+        apply_cities_on_map_buffer(&state, &mut map_buffer);
+
+        map_buffer
+    }
+}
+
+pub fn apply_cities_on_map_buffer(state: &GameState, buffer: &mut [Vec<Color>]) {
+    for civ in &state.civilizations {
+        let city = &civ.city;
+
+        buffer[city.y as usize][city.x as usize] = str_to_color(&city.color);
+    }
+}
+
+pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>]) -> Vec<Line<'a>> {
+    let zoom = state.zoom_level as usize;
+
+    let visible_width = ((area.width as usize).saturating_sub(2) / zoom).min(state.map.width);
+    let visible_height =
+        (((area.height * 2) as usize).saturating_sub(2) / zoom).min(state.map.height);
+
+    let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));
+    let start_y = (state.camera_y as usize).min(state.map.height.saturating_sub(visible_height));
+
+    let _stop_x = start_x + visible_width;
+    let stop_y = start_y + visible_height;
+
+    buffer[start_y..stop_y]
+        .iter()
+        .flat_map(|t| (0..zoom).map(|_| t.clone()))
+        .collect::<Vec<Vec<Color>>>()
+        .chunks_exact(2)
+        .map(|pair| {
+            Line::from(
+                pair[0]
+                    .iter()
+                    .zip(&pair[1])
+                    .skip(start_x)
+                    .take(visible_width)
+                    .flat_map(|(c1, c2)| {
+                        (0..zoom).map(|_| Span::styled("▄", Style::new().bg(*c1).fg(*c2)))
+                    })
+                    .collect::<Vec<Span>>(),
+            )
+        })
+        .collect::<Vec<Line>>()
+}
+
+pub fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
+    let buffer = generate_map_buffer(state);
+
+    let title = if state.camera_mode {
+        format!(
+            "Map (Camera Mode - Position: {},{} - Zoom: {}x) - Press 'v' or Esc to exit",
+            state.camera_x, state.camera_y, state.zoom_level
+        )
+    } else {
+        format!(
+            "Map (Press 'v' for camera, 'z' to zoom - Zoom: {}x)",
+            state.zoom_level
+        )
+    };
+
+    let buffer = generate_map_buffer(state);
+    let map_lines = render_buffer(state, area, &buffer);
+
+    // apply ui_config.color to the map widget border
+    let map_widget = Paragraph::new(map_lines).block(
+        Block::default()
+            .title(title)
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ui_config.color)),
+    );
+    frame.render_widget(map_widget, area);
 }

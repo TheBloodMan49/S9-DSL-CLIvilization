@@ -1,3 +1,4 @@
+use ratatui::style::Color;
 use crate::ast::{BuildingDef, BuildingInstance, BuildingInstanceArray, City, PlayerType, PrereqArray, Production, ProductionType, UnitDef, UnitInstance, UnitInstanceArray};
 use super::map::GameMap;
 
@@ -33,6 +34,7 @@ pub struct GameState {
     pub camera_x: i32,
     pub camera_y: i32,
     pub camera_mode: bool,
+    pub map_buffer_cache: Option<Vec<Vec<Color>>>,
 
     // definition
     pub buildings: Vec<BuildingDef>,
@@ -142,6 +144,7 @@ impl GameState {
             camera_x: 0,
             camera_y: 0,
             camera_mode: false,
+            map_buffer_cache: None,
             zoom_level: 1,
             action_editing: false,
             action_input: String::new(),
