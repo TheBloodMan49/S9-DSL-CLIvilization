@@ -107,7 +107,7 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
 
         for (y, line) in map_lines.iter_mut().enumerate() {
             for (x, span) in line.iter_mut().enumerate() {
-                if y == city.y as usize && x == city.x as usize {
+                if (y + start_y) == city.y as usize && (x + start_x) == city.x as usize {
                     *span = {
                         let style = Style::default().fg(Color::Indexed(196)).bg(Color::Indexed(196));
                         Span::styled("█", style)
