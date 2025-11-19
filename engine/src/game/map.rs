@@ -75,6 +75,7 @@ impl Terrain {
     }
 }
 
+//todo: add sprite handling
 #[derive(Clone, Debug)]
 pub struct GameMap {
     pub tiles: Vec<Vec<Terrain>>,

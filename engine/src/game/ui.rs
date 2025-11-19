@@ -101,11 +101,6 @@ fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConf
         })
         .collect();
 
-    //TODO: ajouter l'affichage des capitales
-    for civ in &state.civilizations {
-
-    }
-
     let title = if state.camera_mode {
         format!(
             "Map (Camera Mode - Position: {},{} - Zoom: {}x) - Press 'v' or Esc to exit",
