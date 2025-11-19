@@ -183,8 +183,27 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
         "Aucun".to_string()
     };
 
+    let recruitement_text = if !state.civilizations[state.player_turn].recruitments.is_empty() {
+        state.civilizations[state.player_turn]
+            .recruitments
+            .iter()
+            .map(|recruitement| {
+                let building_name = state
+                    .units
+                    .iter()
+                    .find(|u| &u.name == &recruitement.id_unit)
+                    .map(|u| u.name.clone())
+                    .unwrap_or(recruitement.id_unit.clone());
+                format!("- {} ({} tours restants)", building_name, recruitement.remaining)
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        "Aucun".to_string()
+    };
+
     let player_text = format!(
-        "Ressources: {}\nForce Millitaire: {}\nBatiments: {}\nUnités: {}\n\nActions disponibles:\n{}\n\nBatiment en construction: \n{}",
+        "Ressources: {}\nForce Millitaire: {}\nBatiments: {}\nUnités: {}\n\nActions disponibles:\n{}\n\nBatiment en construction: \n{}\n\nUnités en recrutement: \n{}",
         state.civilizations[state.player_turn].resources.ressources,
         state.calculate_city_power(state.player_turn),
         state.civilizations[state.player_turn].city.buildings.elements.len().to_string()
@@ -195,7 +214,8 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
             + " en construction",
         0,
         "- Construire Batiment (build)\n- Recruter Unité(hire)\n- Attaquer (attack)\n- Finir Tour (end)",
-        constructions_text
+        constructions_text,
+        recruitement_text
     );
 
     let player = Paragraph::new(player_text)
