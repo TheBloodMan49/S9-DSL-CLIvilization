@@ -133,7 +133,7 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
         // List players
         state.civilizations
             .iter()
-            .map(|c| format!("- {}", c.city.name))
+            .map(|c| format!("- {} ({:?})", c.city.name, c.city.player_type))
             .collect::<Vec<_>>()
             .join("\n"),
         state.civilizations[state.player_turn].city.name
