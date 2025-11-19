@@ -47,14 +47,14 @@ caserne {
     cost=3
     build_time=4
     slots=1
-    production={ type=unit id_units=légionnaire amount=1 time=3 cost=4 }
+    production={ type=UNIT id_units=légionnaire amount=1 time=3 cost=4 }
     prerequisites=[]
 }
 chantier {
     cost=4
     build_time=5
     slots=2
-    production={ type=unit id_units=légionnaire amount=1 time=4 cost=6 }
+    production={ type=UNIT id_units=légionnaire amount=1 time=4 cost=6 }
     prerequisites=[]
 }
 

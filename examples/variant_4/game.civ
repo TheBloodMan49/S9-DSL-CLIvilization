@@ -41,14 +41,14 @@ temple {
     cost=8
     build_time=5
     slots=1
-    production={ type=unit id_units=prêtre amount=1 time=4 cost=5 }
+    production={ type=UNIT id_units=prêtre amount=1 time=4 cost=5 }
     prerequisites=[]
 }
 pyramide {
     cost=10
     build_time=6
     slots=2
-    production={ type=unit id_units=archer amount=1 time=5 cost=6 }
+    production={ type=UNIT id_units=archer amount=1 time=5 cost=6 }
     prerequisites=[]
 }
 
