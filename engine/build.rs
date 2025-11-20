@@ -11,15 +11,15 @@ const NODE_REGEX: &str =
 const PROPERTY_REGEX: &str = r"\s+(?<NAME>[a-zA-Z_]+)(?<OPTION>\?|): (?<TYPE>[a-zA-Z<>_]+);";
 const ALIAS_REGEX: &str = r"export type (?<NAME>[a-zA-Z_]+) = (?<PROP>[a-zA-Z_]+);";
 const ENUM_REGEX: &str =
-    r#"export type (?<NAME>[a-zA-Z_]+) = (?<PROPS>[a-zA-Z_]+(\s*\|\s*[a-zA-Z_]+)+);"#;
-const ENUM_VARIANT_REGEX: &str = r#"\s*(\|\s+|)(?<TYPE>[a-zA-Z_]+)"#;
+    r"export type (?<NAME>[a-zA-Z_]+) = (?<PROPS>[a-zA-Z_]+(\s*\|\s*[a-zA-Z_]+)+);";
+const ENUM_VARIANT_REGEX: &str = r"\s*(\|\s+|)(?<TYPE>[a-zA-Z_]+)";
 const TAGGED_ENUM_REGEX: &str =
-    r#"export type (?<NAME>[a-zA-Z_]+) = (?<PROPS>'[a-zA-Z_]+'(\s*\|\s*'[a-zA-Z_]+')+);"#;
-const TAGGED_ENUM_VARIANT_REGEX: &str = r#"\s*(\|\s+|)(?<TYPE>'[a-zA-Z_]+')"#;
+    r"export type (?<NAME>[a-zA-Z_]+) = (?<PROPS>'[a-zA-Z_]+'(\s*\|\s*'[a-zA-Z_]+')+);";
+const TAGGED_ENUM_VARIANT_REGEX: &str = r"\s*(\|\s+|)(?<TYPE>'[a-zA-Z_]+')";
 
 fn main() {
     // Tell cargo when to rerun
-    println!("cargo:rerun-if-changed={}", AST_FILE_PATH);
+    println!("cargo:rerun-if-changed={AST_FILE_PATH}");
 
     // Preparing output directory
     let out_dir_str = env::var("OUT_DIR").expect("missing OUT_DIR env var");
@@ -120,7 +120,7 @@ fn generate_tagged_enums(source_file: &mut BufWriter<File>, content: &str) {
                 writeln!(
                     source_file,
                     "    {},",
-                    type_name.replace("\"", "").replace("'", "")
+                    type_name.replace(['"', '\''], "")
                 )
                     .expect("failed to write to source source file");
         }

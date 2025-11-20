@@ -104,10 +104,10 @@ pub fn generate_map_buffer(state: &GameState) -> Vec<Vec<Color>> {
             .map
             .tiles
             .iter()
-            .map(|line| line.iter().map(|terrain| terrain.to_style()).collect())
+            .map(|line| line.iter().map(Terrain::to_style).collect())
             .collect();
 
-        apply_cities_on_map_buffer(&state, &mut map_buffer);
+        apply_cities_on_map_buffer(state, &mut map_buffer);
 
         map_buffer
     }

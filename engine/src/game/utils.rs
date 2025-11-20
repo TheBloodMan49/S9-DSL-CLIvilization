@@ -4,7 +4,7 @@ pub fn hash_tmb(text: String) -> u32 {
     let mut hash: u32 = 2166136261; // FNV offset basis
 
     for byte in text.as_bytes() {
-        hash ^= *byte as u32;
+        hash ^= u32::from(*byte);
         hash = hash.wrapping_mul(16777619); // FNV prime
     }
 
@@ -48,10 +48,10 @@ pub fn str_to_color(s: &str) -> ratatui::style::Color {
 pub fn write_to_file(filename: &str, content: &str) -> Result<()>{
     // Create output/ directory if it doesn't exist
     std::fs::create_dir_all("output")?;
-    let filepath = format!("output/{}", filename);
+    let filepath = format!("output/{filename}");
     if let Err(e) = std::fs::write(&filepath, content) {
         //TODO: log
-        return Err(anyhow!("Failed to write to file {}: {}", filepath, e));
+        return Err(anyhow!("Failed to write to file {filepath}: {e}"));
     }
     //TODO: log success
     Ok(())

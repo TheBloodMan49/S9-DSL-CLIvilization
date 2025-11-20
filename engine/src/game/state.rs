@@ -279,7 +279,7 @@ impl GameState {
         }
 
         let parts: Vec<&str> = txt.split_whitespace().collect();
-        match parts.get(0).map(|s| *s) {
+        match parts.first().copied() {
             Some("build") => {
                 // build [type]
                 if parts.len() < 2 {
@@ -297,12 +297,12 @@ impl GameState {
                                     Err(err) => { self.open_popup("Build", &err, vec![]); return true; }
                                 }
                             } else {
-                                self.open_popup("Build", &format!("Unknown building: {}", bname), vec![]);
+                                self.open_popup("Build", &format!("Unknown building: {bname}"), vec![]);
                                 return true;
                             }
                 }
             }
-            Some("hire") | Some("recruit") => {
+            Some("hire" | "recruit") => {
                 if parts.len() < 2 {
                     let choices = self.units.iter().map(|u| u.name.clone()).collect();
                     self.open_popup("Hire", "Choose unit to hire:", choices);
@@ -316,7 +316,7 @@ impl GameState {
                                     Err(err) => { self.open_popup("Hire", &err, vec![]); return true; }
                                 }
                             } else {
-                                self.open_popup("Hire", &format!("Unknown unit: {}", uname), vec![]);
+                                self.open_popup("Hire", &format!("Unknown unit: {uname}"), vec![]);
                                 return true;
                             }
                 }
@@ -337,13 +337,13 @@ impl GameState {
                             Err(e) => { self.open_popup("Attack", &e, vec![]); return true; }
                         }
                     } else {
-                        self.open_popup("Attack", &format!("Unknown target: {}", target), vec![]);
+                        self.open_popup("Attack", &format!("Unknown target: {target}"), vec![]);
                         return true;
                     }
                 }
             }
             _ => {
-                self.open_popup("Action", &format!("Unknown action: {}", txt), vec![]);
+                self.open_popup("Action", &format!("Unknown action: {txt}"), vec![]);
                 return true;
             }
         }
@@ -362,11 +362,10 @@ impl GameState {
         if !popup.choices.is_empty() {
             let sel = popup.input.trim();
             let mut chosen: Option<String> = None;
-            if let Ok(idx) = sel.parse::<usize>() {
-                if idx >= 1 && idx <= popup.choices.len() {
+            if let Ok(idx) = sel.parse::<usize>()
+                && idx >= 1 && idx <= popup.choices.len() {
                     chosen = Some(popup.choices[idx-1].clone());
                 }
-            }
             if chosen.is_none() {
                 // try match by name
                 for c in &popup.choices {
@@ -399,12 +398,11 @@ impl GameState {
                         }
                     }
                     "Attack" => {
-                        if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name == ch) {
-                            if let Err(e) = self.start_attack(self.player_turn, idx, None) {
+                        if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name == ch)
+                            && let Err(e) = self.start_attack(self.player_turn, idx, None) {
                                 self.open_popup("Attack", &e, vec![]);
                                 return;
                             }
-                        }
                     }
                     _ => {}
                 }
@@ -422,7 +420,7 @@ impl GameState {
     pub fn start_construction(&mut self, civ_index: usize, building_name: &str) -> Result<(), String> {
         let bdef = match self.buildings.iter().find(|b| b.name == building_name) {
             Some(b) => b,
-            None => return Err(format!("Unknown building: {}", building_name)),
+            None => return Err(format!("Unknown building: {building_name}")),
         };
         let civ = &mut self.civilizations[civ_index];
         let occupied = civ.city.buildings.elements.len() + civ.constructions.len();
@@ -449,19 +447,16 @@ impl GameState {
     pub fn start_recruitment(&mut self, civ_index: usize, unit_name: &str) -> Result<(), String> {
         let udef = match self.units.iter().find(|u| u.name == unit_name) {
             Some(u) => u,
-            None => return Err(format!("Unknown unit: {}", unit_name)),
+            None => return Err(format!("Unknown unit: {unit_name}")),
         };
         let civ = &mut self.civilizations[civ_index];
         // check for building that can produce this unit (built only)
         let mut producer: Option<&BuildingDef> = None;
         for b_inst in &civ.city.buildings.elements {
-            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
-                if format!("{:?}", bdef.production.prod_type).to_lowercase() == "unit" {
-                    if let Some(prod_id) = &bdef.production.prod_unit_id {
-                        if prod_id == &udef.name { producer = Some(bdef); break; }
-                    }
-                }
-            }
+            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building)
+                && format!("{:?}", bdef.production.prod_type).to_lowercase() == "unit"
+                    && let Some(prod_id) = &bdef.production.prod_unit_id
+                        && prod_id == &udef.name { producer = Some(bdef); break; }
         }
         // no producer found
         if producer.is_none() {
@@ -495,11 +490,10 @@ impl GameState {
         let civ = &mut self.civilizations[player_index];
         // resource from finished buildings
         for b_inst in &civ.city.buildings.elements {
-            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
-                if format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
+            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building)
+                && format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
                     civ.resources.ressources += bdef.production.amount as i32;
                 }
-            }
         }
 
         // process constructions
@@ -577,14 +571,14 @@ impl GameState {
         let mut removed: u32 = 0;
         let mut i = 0;
         while i < civ.city.units.units.len() && to_remove > 0 {
-            let available: u32 = civ.city.units.units[i].nb_units as u32;
+            let available: u32 = civ.city.units.units[i].nb_units;
             if available <= to_remove {
                 removed += available;
                 to_remove -= available;
                 civ.city.units.units.remove(i);
                 // do not increment i since we removed current
             } else {
-                civ.city.units.units[i].nb_units = (available - to_remove) as u32;
+                civ.city.units.units[i].nb_units = available - to_remove;
                 removed += to_remove;
                 to_remove = 0;
                 i += 1;
@@ -605,7 +599,7 @@ impl GameState {
         if !self.civilizations[defender_idx].alive { return Err("Target is already defeated".to_string()); }
 
         // count available units
-        let total_units: u32 = self.civilizations[attacker_idx].city.units.units.iter().map(|u| u.nb_units as u32).sum();
+        let total_units: u32 = self.civilizations[attacker_idx].city.units.units.iter().map(|u| u.nb_units).sum();
         if total_units == 0 { return Err("No units available to send".to_string()); }
 
         let send_amount = amount_opt.unwrap_or(total_units).min(total_units);
@@ -620,8 +614,8 @@ impl GameState {
         let b = &self.civilizations[defender_idx].city;
 
         // TODO: BFS ? visual ???
-        let dx = (a.x as i32 - b.x as i32) as f64;
-        let dy = (a.y as i32 - b.y as i32) as f64;
+        let dx = f64::from(a.x as i32 - b.x as i32);
+        let dy = f64::from(a.y as i32 - b.y as i32);
         let dist = (dx * dx + dy * dy).sqrt();
         let movespeed = 3.0_f64;
         let mut turns = (dist / movespeed).ceil() as u32;

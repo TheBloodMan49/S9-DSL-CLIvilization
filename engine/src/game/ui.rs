@@ -80,7 +80,9 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
 
     // Player info
     // Build a string describing current constructions (or "Aucun")
-    let constructions_text = if !state.civilizations[state.player_turn].constructions.is_empty() {
+    let constructions_text = if state.civilizations[state.player_turn].constructions.is_empty() {
+        "Aucun".to_string()
+    } else {
         state.civilizations[state.player_turn]
             .constructions
             .iter()
@@ -88,18 +90,18 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
                 let building_name = state
                     .buildings
                     .iter()
-                    .find(|u| &u.name == &construction.id_building)
+                    .find(|u| u.name == construction.id_building)
                     .map(|u| u.name.clone())
                     .unwrap_or(construction.id_building.clone());
                 format!("- {} ({} tours restants)", building_name, construction.remaining)
             })
             .collect::<Vec<_>>()
             .join("\n")
-    } else {
-        "Aucun".to_string()
     };
 
-    let recruitement_text = if !state.civilizations[state.player_turn].recruitments.is_empty() {
+    let recruitement_text = if state.civilizations[state.player_turn].recruitments.is_empty() {
+        "Aucun".to_string()
+    } else {
         state.civilizations[state.player_turn]
             .recruitments
             .iter()
@@ -107,15 +109,13 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
                 let building_name = state
                     .units
                     .iter()
-                    .find(|u| &u.name == &recruitement.id_unit)
+                    .find(|u| u.name == recruitement.id_unit)
                     .map(|u| u.name.clone())
                     .unwrap_or(recruitement.id_unit.clone());
                 format!("- {} ({} tours restants)", building_name, recruitement.remaining)
             })
             .collect::<Vec<_>>()
             .join("\n")
-    } else {
-        "Aucun".to_string()
     };
 
     let player_text = format!(
@@ -159,10 +159,7 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
         "(press 'a' to type an action)".to_string()
     };
 
-    let resources = Paragraph::new(format!(
-        "{}",
-        action_text
-    ))
+    let resources = Paragraph::new(action_text.clone())
     .block(Block::default()
         .title("Action")
         .borders(Borders::ALL)
@@ -173,8 +170,8 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
     // If a popup is open, render a centered overlay on top of everything
     if let Some(popup) = &state.popup {
         let full = frame.area();
-        let w = (full.width as u16).saturating_sub(10).min(60);
-        let h = (full.height as u16).saturating_sub(8).min(12);
+        let w = full.width.saturating_sub(10).min(60);
+        let h = full.height.saturating_sub(8).min(12);
         let x = full.x + (full.width.saturating_sub(w) / 2);
         let y = full.y + (full.height.saturating_sub(h) / 2);
         let popup_area = Rect { x, y, width: w, height: h };
@@ -229,7 +226,7 @@ pub fn draw_color_test_256(terminal: &mut Terminal<CrosstermBackend<std::io::Std
         for col in 0..cols {
             let idx = (row * cols + col) as u8;
             // Each cell shows the index as 3 chars with background set to the indexed color
-            let text = format!("{:>3}", idx);
+            let text = format!("{idx:>3}");
             let style = Style::default().bg(Color::Indexed(idx)).fg(Color::Reset);
             spans.push(Span::styled(text, style));
             // add a small spacer between cells
@@ -256,7 +253,7 @@ pub fn draw_color_test_rgb(terminal: &mut Terminal<CrosstermBackend<std::io::Std
     for v in 0..height {
         let mut spans: Vec<Span> = Vec::new();
         for h in offset..=360 {
-            let (r, g, b) = hsv_to_rgb(h as f32, 1.0, v as f32 / height as f32);
+            let (r, g, b) = hsv_to_rgb(h as f32, 1.0, f32::from(v) / f32::from(height));
             let color = Color::Rgb(r, g, b);
             let text = "  "; // two spaces for better visibility
             let style = Style::default().bg(color).fg(Color::Reset);

@@ -45,7 +45,7 @@ fn main() -> Result<()> {
 
     if matches.blob {
         if let Some(blob_str) = blob {
-            println!("{}", blob_str);
+            println!("{blob_str}");
         } else {
             println!("This binary does not contain a blob.");
         }
@@ -66,7 +66,7 @@ fn main() -> Result<()> {
     if matches.headless {
         use std::io::{BufRead, BufReader};
         use crate::game::RandomAi;
-        use crate::ast::PlayerType;
+        
 
         let stdin = std::io::stdin();
         let reader = BufReader::new(stdin);
@@ -137,7 +137,7 @@ fn main() -> Result<()> {
                 }
                 _ => {
                     // Unknown command -> respond with a helpful message and snapshot
-                    eprintln!("Unknown command: {}", trimmed);
+                    eprintln!("Unknown command: {trimmed}");
                     let snap = game.snapshot_value();
                     println!("{}", serde_json::to_string(&snap)?);
                 }

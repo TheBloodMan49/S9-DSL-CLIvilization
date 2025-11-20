@@ -32,10 +32,10 @@ pub trait Ai: Send {
     /// When a popup is opened, provide the textual input (e.g. "1" or a name) to submit the popup.
     fn select_popup_input(&mut self, _view: &AiView, _civ_index: usize, popup: &state::Popup) -> String {
         // Default: pick the first choice if any
-        if !popup.choices.is_empty() {
-            "1".to_string()
-        } else {
+        if popup.choices.is_empty() {
             popup.input.clone()
+        } else {
+            "1".to_string()
         }
     }
 }
@@ -88,7 +88,7 @@ impl Ai for RandomAi {
     fn select_popup_input(&mut self, _view: &AiView, _civ_index: usize, popup: &state::Popup) -> String {
         if popup.choices.is_empty() {
             // no choices, return empty input
-            "".to_string()
+            String::new()
         } else {
             let idx = self.rng.gen_range(0..popup.choices.len());
             // return 1-based index as string
@@ -141,7 +141,7 @@ impl Game {
 
         // Read file
         let contents = std::fs::read_to_string(config_path)
-            .context(format!("failed to read config file `{}`", config_path))?;
+            .context(format!("failed to read config file `{config_path}`"))?;
 
         Self::from_string(&contents)
     }
@@ -156,7 +156,7 @@ impl Game {
         let mut game = Game::new();
 
         // Walk sections and apply relevant settings (only Game section is needed for now)
-        for section in model.sections.into_iter() {
+        for section in model.sections {
             match section {
                 crate::ast::Section::Game(g) => {
                     // ui color
@@ -171,7 +171,7 @@ impl Game {
                     game.state.map = map;
 
                     // current turn
-                    game.state.turn = g.current_turn as i32;
+                    game.state.turn = g.current_turn.cast_signed();
                 }
                 crate::ast::Section::BuildingDefArray(bda) => {
                     game.state.buildings = bda.buildings;
@@ -194,9 +194,9 @@ impl Game {
                     game.ais = Vec::new();
                     game.ais.resize_with(game.state.civilizations.len(), || None);
                 }
-                crate::ast::Section::VictoryConditions(_vc) => {
-                    game.state.nb_turns = _vc.nb_turns;
-                    game.state.resources_spent = _vc.resources_spent;
+                crate::ast::Section::VictoryConditions(vc) => {
+                    game.state.nb_turns = vc.nb_turns;
+                    game.state.resources_spent = vc.resources_spent;
                 }
             }
         }
@@ -227,7 +227,7 @@ impl Game {
                     KeyCode::Char('r') => {
                         self.state.map = map::GameMap::new_random(self.state.map.width, self.state.map.height);
                     }
-                    KeyCode::Char('v') | KeyCode::Char('V') => {
+                    KeyCode::Char('v' | 'V') => {
                         self.state.toggle_camera_mode();
                         self.ui_state = UiState::CameraMode;
                     }
@@ -236,7 +236,7 @@ impl Game {
                         self.state.start_action_input();
                         self.ui_state = UiState::ActionEditing;
                     }
-                    KeyCode::Char('z') | KeyCode::Char('Z') => {
+                    KeyCode::Char('z' | 'Z') => {
                         self.state.cycle_zoom();
                     }
                     KeyCode::Char('w') => {
@@ -281,21 +281,21 @@ impl Game {
             UiState::CameraMode => {
                 match key.code {
                     // exit camera mode
-                    KeyCode::Char('v') | KeyCode::Char('V') | KeyCode::Esc => {
+                    KeyCode::Char('v' | 'V') | KeyCode::Esc => {
                         self.state.toggle_camera_mode();
                         self.ui_state = UiState::Normal;
                     }
                     // camera movement
-                    KeyCode::Char('z') | KeyCode::Char('Z') => {
+                    KeyCode::Char('z' | 'Z') => {
                         self.state.move_camera(0, -1);
                     }
-                    KeyCode::Char('s') | KeyCode::Char('S') => {
+                    KeyCode::Char('s' | 'S') => {
                         self.state.move_camera(0, 1);
                     }
-                    KeyCode::Char('q') | KeyCode::Char('Q') => {
+                    KeyCode::Char('q' | 'Q') => {
                         self.state.move_camera(-1, 0);
                     }
-                    KeyCode::Char('d') | KeyCode::Char('D') => {
+                    KeyCode::Char('d' | 'D') => {
                         self.state.move_camera(1, 0);
                     }
                     _ => {}
@@ -392,7 +392,7 @@ impl Game {
         &mut self.state
     }
 
-    /// Produce a compact JSON value snapshot describing key game state. Uses serde_json::Value.
+    /// Produce a compact JSON value snapshot describing key game state. Uses `serde_json::Value`.
     pub fn snapshot_value(&self) -> serde_json::Value {
         let players: Vec<serde_json::Value> = self.state.civilizations.iter().map(|c| {
             serde_json::json!({
@@ -491,8 +491,8 @@ impl Game {
 
             if let Some(action) = action_opt {
                 let opened = self.apply_action(&action);
-                if opened {
-                    if let Some(popup) = &self.state.popup {
+                if opened
+                    && let Some(popup) = &self.state.popup {
                         let popup_clone = popup.clone();
                         let view2 = self.make_ai_view();
                         let input = {
@@ -501,7 +501,6 @@ impl Game {
                         };
                         self.submit_popup_input(&input);
                     }
-                }
             } else {
                 self.step();
             }
