@@ -287,19 +287,18 @@ impl GameState {
                     let choices = self.buildings.iter().map(|b| b.name.clone()).collect();
                     self.open_popup("Build", "Choose building type:", choices);
                     return true;
+                }
+                let bname = parts[1];
+                if let Some(bdef) = self.buildings.iter().find(|b| b.name.to_lowercase() == bname) {
+                    // attempt to start construction
+                    let name = bdef.name.clone();
+                    match self.start_construction(self.player_turn, &name) {
+                        Ok(()) => {}
+                        Err(err) => { self.open_popup("Build", &err, vec![]); return true; }
+                    }
                 } else {
-                    let bname = parts[1];
-                            if let Some(bdef) = self.buildings.iter().find(|b| b.name.to_lowercase() == bname) {
-                                // attempt to start construction
-                                let name = bdef.name.clone();
-                                match self.start_construction(self.player_turn, &name) {
-                                    Ok(()) => {}
-                                    Err(err) => { self.open_popup("Build", &err, vec![]); return true; }
-                                }
-                            } else {
-                                self.open_popup("Build", &format!("Unknown building: {bname}"), vec![]);
-                                return true;
-                            }
+                    self.open_popup("Build", &format!("Unknown building: {bname}"), vec![]);
+                    return true;
                 }
             }
             Some("hire" | "recruit") => {
@@ -307,18 +306,17 @@ impl GameState {
                     let choices = self.units.iter().map(|u| u.name.clone()).collect();
                     self.open_popup("Hire", "Choose unit to hire:", choices);
                     return true;
+                }
+                let uname = parts[1];
+                if let Some(udef) = self.units.iter().find(|u| u.name.to_lowercase() == uname) {
+                    let uname_owned = udef.name.clone();
+                    match self.start_recruitment(self.player_turn, &uname_owned) {
+                        Ok(()) => {}
+                        Err(err) => { self.open_popup("Hire", &err, vec![]); return true; }
+                    }
                 } else {
-                    let uname = parts[1];
-                            if let Some(udef) = self.units.iter().find(|u| u.name.to_lowercase() == uname) {
-                                let uname_owned = udef.name.clone();
-                                match self.start_recruitment(self.player_turn, &uname_owned) {
-                                    Ok(()) => {}
-                                    Err(err) => { self.open_popup("Hire", &err, vec![]); return true; }
-                                }
-                            } else {
-                                self.open_popup("Hire", &format!("Unknown unit: {uname}"), vec![]);
-                                return true;
-                            }
+                    self.open_popup("Hire", &format!("Unknown unit: {uname}"), vec![]);
+                    return true;
                 }
             }
             Some("attack") => {
@@ -327,19 +325,18 @@ impl GameState {
                     let choices = self.civilizations.iter().enumerate().filter(|(i,_)| *i != self.player_turn).map(|(_,c)| c.city.name.clone()).collect();
                     self.open_popup("Attack", "Choose player to attack:", choices);
                     return true;
-                } else {
-                    let target = parts[1];
-                    if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name.to_lowercase() == target) {
-                        // optional amount as third argument
-                        let amount = if parts.len() >= 3 { parts[2].parse::<u32>().ok() } else { None };
-                        match self.start_attack(self.player_turn, idx, amount) {
-                            Ok(()) => {}
-                            Err(e) => { self.open_popup("Attack", &e, vec![]); return true; }
-                        }
-                    } else {
-                        self.open_popup("Attack", &format!("Unknown target: {target}"), vec![]);
-                        return true;
+                }
+                let target = parts[1];
+                if let Some((idx, _)) = self.civilizations.iter().enumerate().find(|(_,c)| c.city.name.to_lowercase() == target) {
+                    // optional amount as third argument
+                    let amount = if parts.len() >= 3 { parts[2].parse::<u32>().ok() } else { None };
+                    match self.start_attack(self.player_turn, idx, amount) {
+                        Ok(()) => {}
+                        Err(e) => { self.open_popup("Attack", &e, vec![]); return true; }
                     }
+                } else {
+                    self.open_popup("Attack", &format!("Unknown target: {target}"), vec![]);
+                    return true;
                 }
             }
             _ => {
@@ -418,10 +415,7 @@ impl GameState {
 
     // Start construction: occupies a building slot immediately, finishes after build_time turns
     pub fn start_construction(&mut self, civ_index: usize, building_name: &str) -> Result<(), String> {
-        let bdef = match self.buildings.iter().find(|b| b.name == building_name) {
-            Some(b) => b,
-            None => return Err(format!("Unknown building: {building_name}")),
-        };
+        let Some(bdef) = self.buildings.iter().find(|b| b.name == building_name) else { return Err(format!("Unknown building: {building_name}")) };
         let civ = &mut self.civilizations[civ_index];
         let occupied = civ.city.buildings.elements.len() + civ.constructions.len();
         // Only one construction at a time
@@ -445,10 +439,7 @@ impl GameState {
 
     // Start recruitment: requires an already-built building that produces this unit
     pub fn start_recruitment(&mut self, civ_index: usize, unit_name: &str) -> Result<(), String> {
-        let udef = match self.units.iter().find(|u| u.name == unit_name) {
-            Some(u) => u,
-            None => return Err(format!("Unknown unit: {unit_name}")),
-        };
+        let Some(udef) = self.units.iter().find(|u| u.name == unit_name) else { return Err(format!("Unknown unit: {unit_name}")) };
         let civ = &mut self.civilizations[civ_index];
         // check for building that can produce this unit (built only)
         let mut producer: Option<&BuildingDef> = None;
@@ -656,7 +647,7 @@ impl GameState {
                 self.camera_x /= 3;
                 self.camera_y /= 3;
             }
-            _ => {}
+            _ => {unreachable!("Invalid zoom transition");}
         }
 
         self.camera_x = self.camera_x.clamp(0, self.map.width as i32 - 1);
@@ -670,9 +661,9 @@ impl GameState {
         // Power from units
         for unit in &civ.city.units.units {
             let id = &unit.id_units;
-            power += unit.nb_units as i32 * self.units.iter()
+            power += unit.nb_units.cast_signed() * self.units.iter()
                 .find(|u| &u.name == id)
-                .map_or(0, |u| u.attack as i32);
+                .map_or(0, |u| u.attack.cast_signed());
         }
 
         power
