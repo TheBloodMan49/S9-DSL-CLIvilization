@@ -111,18 +111,14 @@ fn generate_tagged_enums(source_file: &mut BufWriter<File>, content: &str) {
             "#[derive(Serialize, Deserialize, Debug)]\npub enum {} {{",
             capture.name("NAME").expect("no capture group").as_str()
         )
-            .expect("failed to write to source source file");
+        .expect("failed to write to source source file");
 
         for s_capture in tagged_enum_variant_regex
             .captures_iter(capture.name("PROPS").expect("no capture group").as_str())
         {
             let type_name = s_capture.name("TYPE").expect("no capture group").as_str();
-                writeln!(
-                    source_file,
-                    "    {},",
-                    type_name.replace(['"', '\''], "")
-                )
-                    .expect("failed to write to source source file");
+            writeln!(source_file, "    {},", type_name.replace(['"', '\''], ""))
+                .expect("failed to write to source source file");
         }
 
         writeln!(source_file, "}}\n").expect("failed to write to source source file");
@@ -144,14 +140,19 @@ fn generate_nodes(source_file: &mut BufWriter<File>, content: &str) {
         for s_capture in
             property_regex.captures_iter(capture.name("PROPS").expect("no capture group").as_str())
         {
-            if s_capture.name("OPTION").expect("no capture group").as_str().is_empty() {
+            if s_capture
+                .name("OPTION")
+                .expect("no capture group")
+                .as_str()
+                .is_empty()
+            {
                 writeln!(
                     source_file,
                     "    pub {}: {},",
                     s_capture.name("NAME").expect("no capture group").as_str(),
                     process_type(s_capture.name("TYPE").expect("no capture group").as_str())
                 )
-                    .expect("failed to write to source source file");
+                .expect("failed to write to source source file");
             } else {
                 writeln!(
                     source_file,
@@ -159,7 +160,7 @@ fn generate_nodes(source_file: &mut BufWriter<File>, content: &str) {
                     s_capture.name("NAME").expect("no capture group").as_str(),
                     process_type(s_capture.name("TYPE").expect("no capture group").as_str())
                 )
-                    .expect("failed to write to source source file");
+                .expect("failed to write to source source file");
             }
         }
 

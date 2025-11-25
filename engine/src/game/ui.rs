@@ -1,16 +1,16 @@
-use crossterm::execute;
-use crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
-use ratatui::{
-    prelude::*,
-    widgets::{Block, Borders, Paragraph},
-    style::Style,
-};
+use super::state::GameState;
 use crate::game::map::draw_map;
 use crate::game::utils::hsv_to_rgb;
-use super::state::GameState;
+use crossterm::execute;
+use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
+use ratatui::{
+    prelude::*,
+    style::Style,
+    widgets::{Block, Borders, Paragraph},
+};
 
 pub struct UiConfig {
-    pub color: Color
+    pub color: Color,
 }
 
 pub fn draw_ui(frame: &mut Frame, state: &GameState, ui_config: &UiConfig) {
@@ -62,7 +62,8 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
         "{}\n\nJoueurs: \n{}\n\nTour actuel: {}",
         format!("Seed: {}", state.map.seed),
         // List players
-        state.civilizations
+        state
+            .civilizations
             .iter()
             .map(|c| format!("- {} ({:?})", c.city.name, c.city.player_type))
             .collect::<Vec<_>>()
@@ -70,17 +71,20 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
         state.civilizations[state.player_turn].city.name
     );
 
-    let info = Paragraph::new(info_text)
-        .block(Block::default()
+    let info = Paragraph::new(info_text).block(
+        Block::default()
             .title("Info")
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(ui_config.color))
-        );
+            .border_style(Style::default().fg(ui_config.color)),
+    );
     frame.render_widget(info, areas[0]);
 
     // Player info
     // Build a string describing current constructions (or "Aucun")
-    let constructions_text = if state.civilizations[state.player_turn].constructions.is_empty() {
+    let constructions_text = if state.civilizations[state.player_turn]
+        .constructions
+        .is_empty()
+    {
         "Aucun".to_string()
     } else {
         state.civilizations[state.player_turn]
@@ -93,13 +97,19 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
                     .find(|u| u.name == construction.id_building)
                     .map(|u| u.name.clone())
                     .unwrap_or(construction.id_building.clone());
-                format!("- {} ({} tours restants)", building_name, construction.remaining)
+                format!(
+                    "- {} ({} tours restants)",
+                    building_name, construction.remaining
+                )
             })
             .collect::<Vec<_>>()
             .join("\n")
     };
 
-    let recruitement_text = if state.civilizations[state.player_turn].recruitments.is_empty() {
+    let recruitement_text = if state.civilizations[state.player_turn]
+        .recruitments
+        .is_empty()
+    {
         "Aucun".to_string()
     } else {
         state.civilizations[state.player_turn]
@@ -112,7 +122,10 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
                     .find(|u| u.name == recruitement.id_unit)
                     .map(|u| u.name.clone())
                     .unwrap_or(recruitement.id_unit.clone());
-                format!("- {} ({} tours restants)", building_name, recruitement.remaining)
+                format!(
+                    "- {} ({} tours restants)",
+                    building_name, recruitement.remaining
+                )
             })
             .collect::<Vec<_>>()
             .join("\n")
@@ -122,11 +135,22 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
         "Ressources: {}\nForce Millitaire: {}\nBatiments: {}\nUnités: {}\n\nActions disponibles:\n{}\n\nBatiment en construction: \n{}\n\nUnités en recrutement: \n{}",
         state.civilizations[state.player_turn].resources.ressources,
         state.calculate_city_power(state.player_turn),
-        state.civilizations[state.player_turn].city.buildings.elements.len().to_string()
+        state.civilizations[state.player_turn]
+            .city
+            .buildings
+            .elements
+            .len()
+            .to_string()
             + "/"
-            + &state.civilizations[state.player_turn].city.nb_slots_buildings.to_string()
+            + &state.civilizations[state.player_turn]
+                .city
+                .nb_slots_buildings
+                .to_string()
             + "\n- "
-            + &state.civilizations[state.player_turn].constructions.len().to_string()
+            + &state.civilizations[state.player_turn]
+                .constructions
+                .len()
+                .to_string()
             + " en construction",
         0,
         "- Construire Batiment (build)\n- Recruter Unité(hire)\n- Attaquer (attack)\n- Finir Tour (end)",
@@ -134,19 +158,16 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
         recruitement_text
     );
 
-    let player = Paragraph::new(player_text)
-        .block(Block::default()
-            .title(
-                format!(
-                    "Jouer - {}",
-                    state.civilizations[state.player_turn].city.name
-                )
-            )
+    let player = Paragraph::new(player_text).block(
+        Block::default()
+            .title(format!(
+                "Jouer - {}",
+                state.civilizations[state.player_turn].city.name
+            ))
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(ui_config.color))
-        );
+            .border_style(Style::default().fg(ui_config.color)),
+    );
     frame.render_widget(player, areas[1]);
-
 }
 
 fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
@@ -159,11 +180,11 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
         "(press 'a' to type an action)".to_string()
     };
 
-    let resources = Paragraph::new(action_text.clone())
-    .block(Block::default()
-        .title("Action")
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(ui_config.color))
+    let resources = Paragraph::new(action_text.clone()).block(
+        Block::default()
+            .title("Action")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(ui_config.color)),
     );
     frame.render_widget(resources, area);
 
@@ -174,14 +195,19 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
         let h = full.height.saturating_sub(8).min(12);
         let x = full.x + (full.width.saturating_sub(w) / 2);
         let y = full.y + (full.height.saturating_sub(h) / 2);
-        let popup_area = Rect { x, y, width: w, height: h };
+        let popup_area = Rect {
+            x,
+            y,
+            width: w,
+            height: h,
+        };
 
         // Build lines: prompt, choices, input
         let mut lines: Vec<Line> = Vec::new();
         lines.push(Line::from(Span::raw(popup.prompt.clone())));
         lines.push(Line::from(Span::raw("")));
         for (i, choice) in popup.choices.iter().enumerate() {
-            lines.push(Line::from(Span::raw(format!("{}. {}", i+1, choice))));
+            lines.push(Line::from(Span::raw(format!("{}. {}", i + 1, choice))));
         }
         if !popup.choices.is_empty() {
             lines.push(Line::from(Span::raw("")));
@@ -200,24 +226,45 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
         frame.render_widget(bg_block, popup_area);
         // Build styled lines for popup content (force white on black so map colors don't bleed)
         let mut styled_lines: Vec<Line> = Vec::new();
-        styled_lines.push(Line::from(Span::styled(popup.prompt.clone(), Style::default().fg(Color::White).bg(Color::Black))));
-        styled_lines.push(Line::from(Span::styled(String::new(), Style::default().fg(Color::White).bg(Color::Black))));
+        styled_lines.push(Line::from(Span::styled(
+            popup.prompt.clone(),
+            Style::default().fg(Color::White).bg(Color::Black),
+        )));
+        styled_lines.push(Line::from(Span::styled(
+            String::new(),
+            Style::default().fg(Color::White).bg(Color::Black),
+        )));
         for (i, choice) in popup.choices.iter().enumerate() {
-            let text = format!("{}. {}", i+1, choice);
-            styled_lines.push(Line::from(Span::styled(text, Style::default().fg(Color::White).bg(Color::Black))));
+            let text = format!("{}. {}", i + 1, choice);
+            styled_lines.push(Line::from(Span::styled(
+                text,
+                Style::default().fg(Color::White).bg(Color::Black),
+            )));
         }
         if !popup.choices.is_empty() {
-            styled_lines.push(Line::from(Span::styled(String::new(), Style::default().fg(Color::White).bg(Color::Black))));
-            styled_lines.push(Line::from(Span::styled(format!("Input: {}_", popup.input), Style::default().fg(Color::White).bg(Color::Black))));
+            styled_lines.push(Line::from(Span::styled(
+                String::new(),
+                Style::default().fg(Color::White).bg(Color::Black),
+            )));
+            styled_lines.push(Line::from(Span::styled(
+                format!("Input: {}_", popup.input),
+                Style::default().fg(Color::White).bg(Color::Black),
+            )));
         }
 
-        let popup_widget = Paragraph::new(styled_lines)
-            .block(Block::default().title(popup.title.clone()).borders(Borders::ALL).border_style(Style::default().fg(ui_config.color)));
+        let popup_widget = Paragraph::new(styled_lines).block(
+            Block::default()
+                .title(popup.title.clone())
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(ui_config.color)),
+        );
         frame.render_widget(popup_widget, popup_area);
     }
 }
 
-pub fn draw_color_test_256(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>) -> anyhow::Result<()> {
+pub fn draw_color_test_256(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
     // Build 16x16 grid of indexed colors (0..=255)
     let cols = 16;
     let mut lines: Vec<Line> = Vec::new();
@@ -237,18 +284,24 @@ pub fn draw_color_test_256(terminal: &mut Terminal<CrosstermBackend<std::io::Std
 
     terminal.draw(|f| {
         let size = f.area();
-        let block = Paragraph::new(lines.clone())
-            .block(Block::default().title("Terminal 256-color test (press any key to exit)").borders(Borders::ALL));
+        let block = Paragraph::new(lines.clone()).block(
+            Block::default()
+                .title("Terminal 256-color test (press any key to exit)")
+                .borders(Borders::ALL),
+        );
         f.render_widget(block, size);
     })?;
 
     Ok(())
 }
 
-pub fn draw_color_test_rgb(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, offset: u32) -> anyhow::Result<()> {
+pub fn draw_color_test_rgb(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    offset: u32,
+) -> anyhow::Result<()> {
     // Build a cube of RGB colors with as much height as fits in terminal
     let mut lines: Vec<Line> = Vec::new();
-    let height = terminal.size()?.height -2; // leave space for borders
+    let height = terminal.size()?.height - 2; // leave space for borders
     // Show the color grid as a grid of hue and value
     for v in 0..height {
         let mut spans: Vec<Span> = Vec::new();
@@ -264,15 +317,20 @@ pub fn draw_color_test_rgb(terminal: &mut Terminal<CrosstermBackend<std::io::Std
 
     terminal.draw(|f| {
         let size = f.area();
-        let block = Paragraph::new(lines.clone())
-            .block(Block::default().title("Terminal RGB-color test (press any key to exit)").borders(Borders::ALL));
+        let block = Paragraph::new(lines.clone()).block(
+            Block::default()
+                .title("Terminal RGB-color test (press any key to exit)")
+                .borders(Borders::ALL),
+        );
         f.render_widget(block, size);
     })?;
 
     Ok(())
 }
 
-pub fn cleanup_term(terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>) -> anyhow::Result<()> {
+pub fn cleanup_term(
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+) -> anyhow::Result<()> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 

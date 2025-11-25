@@ -3,11 +3,11 @@ pub mod state;
 pub mod ui;
 pub mod utils;
 
-use anyhow::Context;
-use crate::game::ui::UiConfig;
-use crate::game::utils::{str_to_color, write_to_file};
 use self::state::GameState;
 use self::ui::draw_ui;
+use crate::game::ui::UiConfig;
+use crate::game::utils::{str_to_color, write_to_file};
+use anyhow::Context;
 use rand::Rng;
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
@@ -30,7 +30,12 @@ pub trait Ai: Send {
     fn select_action(&mut self, view: &AiView, civ_index: usize) -> Option<String>;
 
     /// When a popup is opened, provide the textual input (e.g. "1" or a name) to submit the popup.
-    fn select_popup_input(&mut self, _view: &AiView, _civ_index: usize, popup: &state::Popup) -> String {
+    fn select_popup_input(
+        &mut self,
+        _view: &AiView,
+        _civ_index: usize,
+        popup: &state::Popup,
+    ) -> String {
         // Default: pick the first choice if any
         if popup.choices.is_empty() {
             popup.input.clone()
@@ -85,7 +90,12 @@ impl Ai for RandomAi {
         Some(actions.swap_remove(idx))
     }
 
-    fn select_popup_input(&mut self, _view: &AiView, _civ_index: usize, popup: &state::Popup) -> String {
+    fn select_popup_input(
+        &mut self,
+        _view: &AiView,
+        _civ_index: usize,
+        popup: &state::Popup,
+    ) -> String {
         if popup.choices.is_empty() {
             // no choices, return empty input
             String::new()
@@ -138,19 +148,17 @@ impl Game {
     }
 
     pub fn from_file(config_path: &str) -> anyhow::Result<Self> {
-
         // Read file
         let contents = std::fs::read_to_string(config_path)
             .context(format!("failed to read config file `{config_path}`"))?;
 
         Self::from_string(&contents)
     }
-    
+
     pub fn from_string(config_string: &str) -> anyhow::Result<Self> {
-        
         // Parse JSON into AST model
-        let model: crate::ast::Model = serde_json::from_str(config_string)
-            .context("failed to parse config JSON")?;
+        let model: crate::ast::Model =
+            serde_json::from_str(config_string).context("failed to parse config JSON")?;
 
         // Start from default game state
         let mut game = Game::new();
@@ -181,18 +189,21 @@ impl Game {
                 }
                 crate::ast::Section::Cities(cities) => {
                     // Load cities into civilizations
-                    game.state.civilizations = cities.cities.into_iter().map(|city| {
-                        state::Civilization {
+                    game.state.civilizations = cities
+                        .cities
+                        .into_iter()
+                        .map(|city| state::Civilization {
                             resources: state::Resources { ressources: 100 },
                             city,
                             alive: true,
                             constructions: Vec::new(),
                             recruitments: Vec::new(),
-                        }
-                    }).collect();
+                        })
+                        .collect();
                     // Ensure AI slots match civilizations
                     game.ais = Vec::new();
-                    game.ais.resize_with(game.state.civilizations.len(), || None);
+                    game.ais
+                        .resize_with(game.state.civilizations.len(), || None);
                 }
                 crate::ast::Section::VictoryConditions(vc) => {
                     game.state.nb_turns = vc.nb_turns;
@@ -203,7 +214,7 @@ impl Game {
 
         Ok(game)
     }
-    
+
     pub fn run(
         &mut self,
         terminal: &mut ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stdout>>,
@@ -225,7 +236,8 @@ impl Game {
                     }
                     // Pick random seed
                     KeyCode::Char('r') => {
-                        self.state.map = map::GameMap::new_random(self.state.map.width, self.state.map.height);
+                        self.state.map =
+                            map::GameMap::new_random(self.state.map.width, self.state.map.height);
                     }
                     KeyCode::Char('v' | 'V') => {
                         self.state.toggle_camera_mode();
@@ -306,7 +318,11 @@ impl Game {
                     KeyCode::Enter => {
                         // submit action, may open a popup
                         let opened = self.state.submit_action();
-                        self.ui_state = if opened { UiState::PopupOpen } else { UiState::Normal };
+                        self.ui_state = if opened {
+                            UiState::PopupOpen
+                        } else {
+                            UiState::Normal
+                        };
                     }
                     KeyCode::Esc => {
                         self.state.action_editing = false;
@@ -321,29 +337,27 @@ impl Game {
                     _ => {}
                 }
             }
-            UiState::PopupOpen => {
-                match key.code {
-                    KeyCode::Enter => {
-                        self.state.submit_popup();
-                        self.ui_state = UiState::Normal;
-                    }
-                    KeyCode::Esc => {
-                        self.state.close_popup();
-                        self.ui_state = UiState::Normal;
-                    }
-                    KeyCode::Backspace => {
-                        if let Some(p) = &mut self.state.popup {
-                            p.input.pop();
-                        }
-                    }
-                    KeyCode::Char(c) => {
-                        if let Some(p) = &mut self.state.popup {
-                            p.input.push(c);
-                        }
-                    }
-                    _ => {}
+            UiState::PopupOpen => match key.code {
+                KeyCode::Enter => {
+                    self.state.submit_popup();
+                    self.ui_state = UiState::Normal;
                 }
-            }
+                KeyCode::Esc => {
+                    self.state.close_popup();
+                    self.ui_state = UiState::Normal;
+                }
+                KeyCode::Backspace => {
+                    if let Some(p) = &mut self.state.popup {
+                        p.input.pop();
+                    }
+                }
+                KeyCode::Char(c) => {
+                    if let Some(p) = &mut self.state.popup {
+                        p.input.push(c);
+                    }
+                }
+                _ => {}
+            },
         }
     }
 
@@ -356,7 +370,11 @@ impl Game {
         self.state.action_editing = true;
         let opened = self.state.submit_action();
         // update UI state to reflect popup if needed
-        self.ui_state = if opened { UiState::PopupOpen } else { UiState::Normal };
+        self.ui_state = if opened {
+            UiState::PopupOpen
+        } else {
+            UiState::Normal
+        };
         opened
     }
 
@@ -394,14 +412,19 @@ impl Game {
 
     /// Produce a compact JSON value snapshot describing key game state. Uses `serde_json::Value`.
     pub fn snapshot_value(&self) -> serde_json::Value {
-        let players: Vec<serde_json::Value> = self.state.civilizations.iter().map(|c| {
-            serde_json::json!({
-                "name": c.city.name,
-                "resources": c.resources.ressources,
-                "buildings": c.city.buildings.elements.len(),
-                "units": c.city.units.units.len(),
+        let players: Vec<serde_json::Value> = self
+            .state
+            .civilizations
+            .iter()
+            .map(|c| {
+                serde_json::json!({
+                    "name": c.city.name,
+                    "resources": c.resources.ressources,
+                    "buildings": c.city.buildings.elements.len(),
+                    "units": c.city.units.units.len(),
+                })
             })
-        }).collect();
+            .collect();
 
         serde_json::json!({
             "turn": self.state.turn,
@@ -440,14 +463,24 @@ impl Game {
 
     /// Build a lightweight snapshot of the state for AI decision making.
     pub fn make_ai_view(&self) -> AiView {
-        let players = self.state.civilizations.iter().map(|c| AiPlayerView {
-            name: c.city.name.clone(),
-            resources: c.resources.ressources,
-            buildings: c.city.buildings.elements.len(),
-            units: c.city.units.units.len(),
-        }).collect();
+        let players = self
+            .state
+            .civilizations
+            .iter()
+            .map(|c| AiPlayerView {
+                name: c.city.name.clone(),
+                resources: c.resources.ressources,
+                buildings: c.city.buildings.elements.len(),
+                units: c.city.units.units.len(),
+            })
+            .collect();
 
-        let buildings = self.state.buildings.iter().map(|b| b.name.clone()).collect();
+        let buildings = self
+            .state
+            .buildings
+            .iter()
+            .map(|b| b.name.clone())
+            .collect();
         let units = self.state.units.iter().map(|u| u.name.clone()).collect();
 
         AiView {
@@ -468,17 +501,27 @@ impl Game {
         let mut actions_done = 0usize;
 
         loop {
-            if actions_done >= MAX_ACTIONS { break; }
+            if actions_done >= MAX_ACTIONS {
+                break;
+            }
             let civ_idx = self.state.player_turn;
             // if there is no AI registered for this civ, stop
-            if civ_idx >= self.ais.len() { break; }
-            if self.ais[civ_idx].is_none() { break; }
+            if civ_idx >= self.ais.len() {
+                break;
+            }
+            if self.ais[civ_idx].is_none() {
+                break;
+            }
 
             // Only run AI if the civilization is actually flagged AI in the city definition
             if let Some(civ) = self.state.civilizations.get(civ_idx) {
                 use crate::ast::PlayerType;
-                if !matches!(civ.city.player_type, PlayerType::AI) { break; }
-            } else { break; }
+                if !matches!(civ.city.player_type, PlayerType::AI) {
+                    break;
+                }
+            } else {
+                break;
+            }
 
             // build view snapshot
             let view = self.make_ai_view();
@@ -491,16 +534,15 @@ impl Game {
 
             if let Some(action) = action_opt {
                 let opened = self.apply_action(&action);
-                if opened
-                    && let Some(popup) = &self.state.popup {
-                        let popup_clone = popup.clone();
-                        let view2 = self.make_ai_view();
-                        let input = {
-                            let ai_mut = self.ais[civ_idx].as_mut().unwrap();
-                            ai_mut.select_popup_input(&view2, civ_idx, &popup_clone)
-                        };
-                        self.submit_popup_input(&input);
-                    }
+                if opened && let Some(popup) = &self.state.popup {
+                    let popup_clone = popup.clone();
+                    let view2 = self.make_ai_view();
+                    let input = {
+                        let ai_mut = self.ais[civ_idx].as_mut().unwrap();
+                        ai_mut.select_popup_input(&view2, civ_idx, &popup_clone)
+                    };
+                    self.submit_popup_input(&input);
+                }
             } else {
                 self.step();
             }
@@ -508,7 +550,9 @@ impl Game {
             actions_done += 1;
 
             let new_civ = self.state.player_turn;
-            if new_civ >= self.ais.len() || self.ais[new_civ].is_none() { break; }
+            if new_civ >= self.ais.len() || self.ais[new_civ].is_none() {
+                break;
+            }
         }
     }
 }

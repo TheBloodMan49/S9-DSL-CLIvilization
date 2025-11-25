@@ -1,20 +1,17 @@
 mod ast;
 mod game;
 
+use crate::game::ui::{cleanup_term, draw_color_test_256, draw_color_test_rgb};
 use anyhow::Context;
 use anyhow::Result;
-use crossterm::{
-    execute,
-    terminal::{enable_raw_mode, EnterAlternateScreen},
-    event::{self, Event, KeyCode, KeyModifiers},
-};
-use ratatui::{
-    prelude::*,
-    backend::CrosstermBackend,
-};
-use std::io;
 use clap::Parser;
-use crate::game::ui::{cleanup_term, draw_color_test_256, draw_color_test_rgb};
+use crossterm::{
+    event::{self, Event, KeyCode, KeyModifiers},
+    execute,
+    terminal::{EnterAlternateScreen, enable_raw_mode},
+};
+use ratatui::{backend::CrosstermBackend, prelude::*};
+use std::io;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -64,9 +61,8 @@ fn main() -> Result<()> {
 
     // If headless, run a simple stdin-driven loop and avoid initializing terminal or crossterm
     if matches.headless {
-        use std::io::{BufRead, BufReader};
         use crate::game::RandomAi;
-        
+        use std::io::{BufRead, BufReader};
 
         let stdin = std::io::stdin();
         let reader = BufReader::new(stdin);
@@ -94,7 +90,9 @@ fn main() -> Result<()> {
         for line in reader.lines() {
             let line = line?;
             let trimmed = line.trim();
-            if trimmed.is_empty() { continue; }
+            if trimmed.is_empty() {
+                continue;
+            }
             let mut parts = trimmed.split_whitespace();
             match parts.next().unwrap_or("") {
                 "quit" | "exit" => break,
@@ -165,14 +163,14 @@ fn main() -> Result<()> {
                 _ => unreachable!(),
             }
             if event::poll(std::time::Duration::from_millis(100))?
-                && let Event::Key(key) = event::read()? {
-                    if key.code == KeyCode::Char('d') {
-                        offset += 1;
-                    }
-                    else {
-                        break;
-                    }
+                && let Event::Key(key) = event::read()?
+            {
+                if key.code == KeyCode::Char('d') {
+                    offset += 1;
+                } else {
+                    break;
                 }
+            }
         }
         cleanup_term(&mut terminal)?;
         return Ok(());
@@ -185,14 +183,15 @@ fn main() -> Result<()> {
 
         // Handle input
         if event::poll(std::time::Duration::from_millis(100))?
-            && let Event::Key(key) = event::read()? {
-                // Quit on Ctrl+Q
-                if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL) {
-                    break;
-                }
-                // Forward other keys to game handler
-                game.handle_key(key);
+            && let Event::Key(key) = event::read()?
+        {
+            // Quit on Ctrl+Q
+            if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL) {
+                break;
             }
+            // Forward other keys to game handler
+            game.handle_key(key);
+        }
     }
 
     // Cleanup

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 pub fn hash_tmb(text: String) -> u32 {
     let mut hash: u32 = 2166136261; // FNV offset basis
@@ -45,7 +45,7 @@ pub fn str_to_color(s: &str) -> ratatui::style::Color {
     }
 }
 
-pub fn write_to_file(filename: &str, content: &str) -> Result<()>{
+pub fn write_to_file(filename: &str, content: &str) -> Result<()> {
     // Create output/ directory if it doesn't exist
     std::fs::create_dir_all("output")?;
     let filepath = format!("output/{filename}");
