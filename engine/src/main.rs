@@ -36,7 +36,7 @@ struct Args {
 fn main() -> Result<()> {
     // Load .env file
     if let None = dotenv::dotenv().ok() {
-        println!("Missing .env file");
+        return Err(anyhow::anyhow!("Missing .env file"));
     }
 
     // Use clap to parse a --test-color flag for testing color schemes
