@@ -122,12 +122,8 @@ pub fn apply_cities_on_map_buffer(state: &GameState, buffer: &mut [Vec<Color>]) 
     }
 }
 
-pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>]) -> Vec<Line<'a>> {
+pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>], visible_width: usize, visible_height: usize) -> Vec<Line<'a>> {
     let zoom = state.zoom_level as usize;
-
-    let visible_width = ((area.width as usize).saturating_sub(2) / zoom).min(state.map.width);
-    let visible_height =
-        (((area.height * 2) as usize).saturating_sub(2) / zoom).min(state.map.height);
 
     let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));
     let start_y = (state.camera_y as usize).min(state.map.height.saturating_sub(visible_height));
@@ -157,19 +153,25 @@ pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>]) -
 }
 
 pub fn draw_map(frame: &mut Frame, area: Rect, state: &mut GameState, ui_config: &UiConfig) {
+    let visible_width = (usize::from(area.width).saturating_sub(2) / usize::from(state.zoom_level)).min(state.map.width);
+    let visible_height = (usize::from(area.height * 2).saturating_sub(2) / usize::from(state.zoom_level)).min(state.map.height);
+
+    let hidden_width = state.map.width - visible_width;
+    let hidden_height = state.map.height - visible_height;
+
     state.camera_x = state.camera_x.clamp(
         0,
-        ((state.map.width as i32 * state.zoom_level as i32) - area.width as i32 - 1).max(0),
+        hidden_width as i32,
     );
     state.camera_y = state.camera_y.clamp(
         0,
-        ((state.map.height as i32 * state.zoom_level as i32) - area.height as i32 - 1).max(0),
+        hidden_height as i32,
     );
 
     let title = if state.camera_mode {
         format!(
-            "Map (Camera Mode - Position: {},{} - Zoom: {}x) - Press 'v' or Esc to exit",
-            state.camera_x, state.camera_y, state.zoom_level
+            "Map (Camera Mode - Position: {}/{},{}/{} - Zoom: {}x) - Press 'v' or Esc to exit",
+            state.camera_x, hidden_width, state.camera_y, hidden_height, state.zoom_level
         )
     } else {
         format!(
@@ -179,7 +181,7 @@ pub fn draw_map(frame: &mut Frame, area: Rect, state: &mut GameState, ui_config:
     };
 
     let buffer = generate_map_buffer(state);
-    let map_lines = render_buffer(state, area, &buffer);
+    let map_lines = render_buffer(state, area, &buffer, visible_width, visible_height);
 
     // apply ui_config.color to the map widget border
     let map_widget = Paragraph::new(map_lines).block(
