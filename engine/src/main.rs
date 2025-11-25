@@ -38,13 +38,14 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<()> {
     // Load .env file
-    if dotenv::dotenv().ok().is_none() {
+    if dotenvy::dotenv().ok().is_none() {
         return Err(anyhow::anyhow!("Missing .env file"));
     }
 
-    /*let mut ai: AI = AI::new("openai/gpt-4o-mini");
-    ai.send_message("Je vais te demander de mémoriser le mot \"électorat\" ".to_string()).await;
-    ai.send_message("Quel mot t'ai-je demandé de mémoriser ?".to_string()).await;*/
+    let mut ai: AI = AI::new("openai/gpt-4o-mini");
+    //ai.send_message("Je vais te demander de mémoriser le mot \"électorat\" ".to_string()).await;
+    //ai.send_message("Quel mot t'ai-je demandé de mémoriser ?".to_string()).await;
+    //ai.send_message("What is your goal?".to_string()).await;
 
 
     // Use clap to parse a --test-color flag for testing color schemes
