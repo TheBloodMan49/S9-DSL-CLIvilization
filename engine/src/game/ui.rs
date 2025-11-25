@@ -13,7 +13,7 @@ pub struct UiConfig {
     pub color: Color,
 }
 
-pub fn draw_ui(frame: &mut Frame, state: &GameState, ui_config: &UiConfig) {
+pub fn draw_ui(frame: &mut Frame, state: &mut GameState, ui_config: &UiConfig) {
     let size = frame.area();
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -41,7 +41,7 @@ fn draw_status_bar(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
     frame.render_widget(status, area);
 }
 
-fn draw_main_area(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
+fn draw_main_area(frame: &mut Frame, area: Rect, state: &mut GameState, ui_config: &UiConfig) {
     let areas = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])

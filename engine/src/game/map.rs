@@ -7,6 +7,7 @@ use ratatui::layout::Rect;
 use ratatui::prelude::{Color, Line, Span, Style};
 use ratatui::widgets::{Block, Borders, Paragraph};
 use std::fmt::{Display, Write};
+use std::os::linux::raw::stat;
 
 #[derive(Clone, Debug)]
 pub enum Terrain {
@@ -155,8 +156,15 @@ pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>]) -
         .collect::<Vec<Line>>()
 }
 
-pub fn draw_map(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    let buffer = generate_map_buffer(state);
+pub fn draw_map(frame: &mut Frame, area: Rect, state: &mut GameState, ui_config: &UiConfig) {
+    state.camera_x = state.camera_x.clamp(
+        0,
+        ((state.map.width as i32 * state.zoom_level as i32) - area.width as i32 - 1).max(0),
+    );
+    state.camera_y = state.camera_y.clamp(
+        0,
+        ((state.map.height as i32 * state.zoom_level as i32) - area.height as i32 - 1).max(0),
+    );
 
     let title = if state.camera_mode {
         format!(
