@@ -12,6 +12,8 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, prelude::*};
 use std::io;
+use crate::game::ai;
+use crate::game::ai::AI;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -33,11 +35,17 @@ struct Args {
     headless: bool,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     // Load .env file
-    if let None = dotenv::dotenv().ok() {
+    if dotenv::dotenv().ok().is_none() {
         return Err(anyhow::anyhow!("Missing .env file"));
     }
+
+    /*let mut ai: AI = AI::new("openai/gpt-4o-mini");
+    ai.send_message("Je vais te demander de mémoriser le mot \"électorat\" ".to_string()).await;
+    ai.send_message("Quel mot t'ai-je demandé de mémoriser ?".to_string()).await;*/
+
 
     // Use clap to parse a --test-color flag for testing color schemes
     let matches = Args::parse();
@@ -69,14 +77,14 @@ fn main() -> Result<()> {
         use crate::game::RandomAi;
         use std::io::{BufRead, BufReader};
 
-        let stdin = std::io::stdin();
+        let stdin = io::stdin();
         let reader = BufReader::new(stdin);
 
         // Register RandomAi for any PlayerType::AI civilizations
         // First collect indices to avoid borrowing `game` immutably while mutating it
         let mut ai_indices: Vec<usize> = Vec::new();
         for (i, civ) in game.state().civilizations.iter().enumerate() {
-            if matches!(civ.city.player_type, crate::ast::PlayerType::AI) {
+            if matches!(civ.city.player_type, ast::PlayerType::AI) {
                 ai_indices.push(i);
             }
         }

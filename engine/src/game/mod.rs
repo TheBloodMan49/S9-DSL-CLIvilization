@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod map;
 pub mod state;
 pub mod ui;
