@@ -18,7 +18,25 @@ impl AI {
         AI {
             credentials: Credentials::from_env(),
             model,
-            messages: Vec::new(),
+            messages: vec![ChatCompletionMessage {
+                role: ChatCompletionMessageRole::System,
+                content: Some("You are an AI playing a civilization like game in TUI\
+                You will be given the rules.\
+                You will be give a map of the world.\
+                You will be given the output format.\
+                For each turn you will be given the list of possible inputs.\
+                You will have to select an input and output it as a json.\
+                Rules:
+                    - This is a human vs AI game.
+                    - This is a turn based game.
+                    - The human always plays before the AI (you).
+                    - Each player has one city.
+                    - To win you must destroy your opponent's city.
+                    - Each turn you can select zero or multiple actions.
+                    - To finish your turn you MUST say end.
+                ".to_string()),
+                ..Default::default()
+            }],
         }
     }
 
