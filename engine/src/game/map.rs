@@ -117,7 +117,7 @@ pub fn apply_cities_on_map_buffer(state: &GameState, buffer: &mut [Vec<Color>]) 
     for civ in &state.civilizations {
         let city = &civ.city;
         // draw city
-        if city.y >= 0 && city.x >= 0 && (city.y as usize) < buffer.len() && (city.x as usize) < buffer[0].len() {
+        if (city.y as usize) < buffer.len() && (city.x as usize) < buffer[0].len() {
             buffer[city.y as usize][city.x as usize] = str_to_color(&city.color);
         }
     }

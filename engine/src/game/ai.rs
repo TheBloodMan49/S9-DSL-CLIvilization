@@ -62,19 +62,16 @@ impl AI {
         let chat_completion = match chat_completion_res {
             Ok(c) => c,
             Err(e) => {
-                log::error!("AI chat completion failed: {}", e);
+                log::error!("AI chat completion failed: {e}");
                 return None;
             }
         };
 
         let returned_message_opt = chat_completion.choices.first().map(|c| c.message.clone());
-        let returned_message = match returned_message_opt {
-            Some(m) => m,
-            None => {
+        let Some(returned_message) = returned_message_opt else {
                 log::warn!("AI chat completion returned no choices");
                 return None;
-            }
-        };
+            };
 
         self.messages.push(returned_message.clone());
 
@@ -116,11 +113,11 @@ impl LlmAi {
                         }
                         prompt.push_str("Possible buildings:\n");
                         for b in &view.buildings {
-                            prompt.push_str(&format!("- {}\n", b));
+                            prompt.push_str(&format!("- {b}\n"));
                         }
                         prompt.push_str("Possible units:\n");
                         for u in &view.units {
-                            prompt.push_str(&format!("- {}\n", u));
+                            prompt.push_str(&format!("- {u}\n"));
                         }
                         prompt.push_str("\nChoose one action (exactly as the action string, e.g. 'end' or 'build Farm' or 'hire Warrior' or 'attack playername'):\n");
 
@@ -154,16 +151,13 @@ impl crate::game::Ai for LlmAi {
         // Clone view to send across thread
         let view_cloned = AiView { turn: view.turn, player_turn: view.player_turn, players: view.players.clone(), buildings: view.buildings.clone(), units: view.units.clone(), seed: view.seed.clone() };
         if let Err(e) = self.tx.send(LlmRequest::SelectAction(view_cloned, civ_index, resp_tx)) {
-            log::error!("Failed to send LLM select_action request: {}", e);
+            log::error!("Failed to send LLM select_action request: {e}");
             return Some("end".to_string());
         }
         // Wait for response with a timeout
-        match resp_rx.recv_timeout(std::time::Duration::from_secs(10)) {
-            Ok(opt) => opt,
-            Err(_) => {
-                log::warn!("LLM select_action timed out for civ {}", civ_index);
-                Some("end".to_string())
-            }
+        if let Ok(opt) = resp_rx.recv_timeout(std::time::Duration::from_secs(10)) { opt } else {
+            log::warn!("LLM select_action timed out for civ {civ_index}");
+            Some("end".to_string())
         }
     }
 
@@ -171,15 +165,12 @@ impl crate::game::Ai for LlmAi {
         let (resp_tx, resp_rx) = mpsc::channel();
         let view_cloned = AiView { turn: view.turn, player_turn: view.player_turn, players: view.players.clone(), buildings: view.buildings.clone(), units: view.units.clone(), seed: view.seed.clone() };
         if let Err(e) = self.tx.send(LlmRequest::SelectPopupInput(view_cloned, civ_index, popup.clone(), resp_tx)) {
-            log::error!("Failed to send LLM select_popup_input request: {}", e);
+            log::error!("Failed to send LLM select_popup_input request: {e}");
             return String::new();
         }
-        match resp_rx.recv_timeout(std::time::Duration::from_secs(10)) {
-            Ok(s) => s,
-            Err(_) => {
-                log::warn!("LLM select_popup_input timed out for civ {}", civ_index);
-                String::new()
-            }
+        if let Ok(s) = resp_rx.recv_timeout(std::time::Duration::from_secs(10)) { s } else {
+            log::warn!("LLM select_popup_input timed out for civ {civ_index}");
+            String::new()
         }
     }
 }
