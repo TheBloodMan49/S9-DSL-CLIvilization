@@ -117,6 +117,7 @@ pub struct Game {
 }
 
 // Lightweight view passed to AIs to avoid borrows of self
+#[derive(Clone)]
 pub struct AiPlayerView {
     pub name: String,
     pub resources: i32,

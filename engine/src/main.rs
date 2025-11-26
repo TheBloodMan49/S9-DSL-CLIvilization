@@ -13,7 +13,7 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, prelude::*};
 use std::io;
-use crate::game::ai::AI;
+use crate::game::ai::{AI, LlmAi};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
 
     log::info!("Starting clivilization-engine");
 
-    let _ai: AI = AI::new("openai/gpt-4o-mini");
+    // LLM-backed AI will be registered per-civ below
 
     // Use clap to parse a --test-color flag for testing color schemes
     let matches = Args::parse();
@@ -105,7 +105,7 @@ async fn main() -> Result<()> {
         let stdin = io::stdin();
         let reader = BufReader::new(stdin);
 
-        // Register RandomAi for any PlayerType::AI civilizations
+        // Register AIs for headless mode
         // First collect indices to avoid borrowing `game` immutably while mutating it
         let mut ai_indices: Vec<usize> = Vec::new();
         for (i, civ) in game.state().civilizations.iter().enumerate() {
@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
             }
         }
         for i in ai_indices {
-            game.register_ai(i, Box::new(RandomAi::new()));
+            game.register_ai(i, Box::new(LlmAi::new("openai/gpt-4o-mini")));
         }
 
         // Emit initial snapshot
@@ -237,6 +237,21 @@ async fn main() -> Result<()> {
         }
         cleanup_term(&mut terminal)?;
         return Ok(());
+    }
+
+    // Register AIs for UI mode as well so the UI can auto-play AI turns
+    if !matches.headless {
+        use crate::game::ai::LlmAi;
+        let mut ai_indices: Vec<usize> = Vec::new();
+        for (i, civ) in game.state().civilizations.iter().enumerate() {
+            if matches!(civ.city.player_type, ast::PlayerType::AI) {
+                ai_indices.push(i);
+            }
+        }
+        for i in ai_indices {
+            game.register_ai(i, Box::new(LlmAi::new("openai/gpt-4o-mini")));
+            log::info!("Registered LlmAi for civ {} (UI)", i);
+        }
     }
 
     // Game loop
