@@ -49,20 +49,30 @@ impl AI {
 
         self.messages.push(message);
 
-        let chat_completion = ChatCompletionDelta::builder(self.model, self.messages.clone())
+        let chat_completion_res = ChatCompletionDelta::builder(self.model, self.messages.clone())
             .credentials(self.credentials.clone())
             .create()
-            .await
-            .unwrap();
+            .await;
 
-        let returned_message = chat_completion.choices.first().unwrap().message.clone();
+        let chat_completion = match chat_completion_res {
+            Ok(c) => c,
+            Err(e) => {
+                log::error!("AI chat completion failed: {}", e);
+                return;
+            }
+        };
+
+        let returned_message_opt = chat_completion.choices.first().map(|c| c.message.clone());
+        let returned_message = match returned_message_opt {
+            Some(m) => m,
+            None => {
+                log::warn!("AI chat completion returned no choices");
+                return;
+            }
+        };
 
         self.messages.push(returned_message.clone());
 
-        println!(
-            "{:#?}: {}",
-            returned_message.role,
-            returned_message.content.unwrap().trim()
-        );
+        log::debug!("AI response ({:?}): {}", returned_message.role, returned_message.content.as_deref().unwrap_or(""));
     }
 }

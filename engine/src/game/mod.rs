@@ -367,6 +367,7 @@ impl Game {
     /// Apply an action by string. Returns true if this resulted in a popup opening (requires further input).
     pub fn apply_action(&mut self, action: &str) -> bool {
         // prepare action input like interactive mode would
+        log::info!("apply_action called: {}", action);
         self.state.action_input = action.to_string();
         self.state.action_editing = true;
         let opened = self.state.submit_action();
@@ -385,6 +386,7 @@ impl Game {
         if self.state.popup.is_none() {
             return false;
         }
+        log::info!("submit_popup_input: {}", input);
         if let Some(p) = &mut self.state.popup {
             p.input = input.to_string();
         }
@@ -442,6 +444,7 @@ impl Game {
             self.ais.resize_with(civ_index + 1, || None);
         }
         self.ais[civ_index] = Some(ai);
+        log::info!("Registered AI for civ {}", civ_index);
     }
 
     /// Return a list of plausible actions for the civilization index (lowercased strings as used by the parser)
@@ -459,6 +462,7 @@ impl Game {
                 actions.push(format!("attack {}", civ.city.name.to_lowercase()));
             }
         }
+        log::debug!("ai_possible_actions for civ {} => {} actions", civ_index, actions.len());
         actions
     }
 
@@ -503,14 +507,17 @@ impl Game {
 
         loop {
             if actions_done >= MAX_ACTIONS {
+                log::warn!("AI action loop reached MAX_ACTIONS ({})", MAX_ACTIONS);
                 break;
             }
             let civ_idx = self.state.player_turn;
             // if there is no AI registered for this civ, stop
             if civ_idx >= self.ais.len() {
+                log::debug!("No AI registered for civ {} (out of range)", civ_idx);
                 break;
             }
             if self.ais[civ_idx].is_none() {
+                log::debug!("No AI registered for civ {}", civ_idx);
                 break;
             }
 
@@ -518,9 +525,11 @@ impl Game {
             if let Some(civ) = self.state.civilizations.get(civ_idx) {
                 use crate::ast::PlayerType;
                 if !matches!(civ.city.player_type, PlayerType::AI) {
+                    log::debug!("Civ {} is not marked as AI; skipping", civ_idx);
                     break;
                 }
             } else {
+                log::warn!("Civ {} not found in state", civ_idx);
                 break;
             }
 
@@ -534,17 +543,21 @@ impl Game {
             };
 
             if let Some(action) = action_opt {
+                log::info!("AI selected action for civ {}: {}", civ_idx, action);
                 let opened = self.apply_action(&action);
                 if opened && let Some(popup) = &self.state.popup {
+                    log::info!("AI opened popup: {}", popup.title);
                     let popup_clone = popup.clone();
                     let view2 = self.make_ai_view();
                     let input = {
                         let ai_mut = self.ais[civ_idx].as_mut().unwrap();
                         ai_mut.select_popup_input(&view2, civ_idx, &popup_clone)
                     };
+                    log::info!("AI popup input for civ {}: {}", civ_idx, input);
                     self.submit_popup_input(&input);
                 }
             } else {
+                log::info!("AI returned no action for civ {}; ending turn", civ_idx);
                 self.step();
             }
 
@@ -552,6 +565,7 @@ impl Game {
 
             let new_civ = self.state.player_turn;
             if new_civ >= self.ais.len() || self.ais[new_civ].is_none() {
+                log::debug!("Next civ {} has no AI, stopping AI loop", new_civ);
                 break;
             }
         }

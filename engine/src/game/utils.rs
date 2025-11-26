@@ -50,9 +50,9 @@ pub fn write_to_file(filename: &str, content: &str) -> Result<()> {
     std::fs::create_dir_all("output")?;
     let filepath = format!("output/{filename}");
     if let Err(e) = std::fs::write(&filepath, content) {
-        //TODO: log
+        log::error!("Failed to write to file {}: {}", filepath, e);
         return Err(anyhow!("Failed to write to file {filepath}: {e}"));
     }
-    //TODO: log success
+    log::info!("Wrote file {}", filepath);
     Ok(())
 }

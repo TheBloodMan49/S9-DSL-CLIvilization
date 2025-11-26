@@ -1,5 +1,6 @@
 mod ast;
 mod game;
+mod logger;
 
 use crate::game::ui::{cleanup_term, draw_color_test_256, draw_color_test_rgb};
 use anyhow::Context;
@@ -42,11 +43,30 @@ async fn main() -> Result<()> {
         return Err(anyhow::anyhow!("Missing .env file"));
     }
 
-    let mut ai: AI = AI::new("openai/gpt-4o-mini");
-    //ai.send_message("Je vais te demander de mémoriser le mot \"électorat\" ".to_string()).await;
-    //ai.send_message("Quel mot t'ai-je demandé de mémoriser ?".to_string()).await;
-    //ai.send_message("What is your goal?".to_string()).await;
+    // Initialize file logger as early as possible so any startup errors are logged
+    logger::init("logs/game.log").context("failed to initialize logger")?;
 
+    // Install a panic hook so unexpected panics are recorded to the log file
+    std::panic::set_hook(Box::new(|panic_info| {
+        let payload = match panic_info.payload().downcast_ref::<&str>() {
+            Some(s) => *s,
+            None => match panic_info.payload().downcast_ref::<String>() {
+                Some(s) => &s[..],
+                None => "Unknown panic payload",
+            },
+        };
+        let location = if let Some(loc) = panic_info.location() {
+            format!("{}:{}", loc.file(), loc.line())
+        } else {
+            "unknown location".to_string()
+        };
+        let _ = std::panic::take_hook();
+        log::error!("PANIC at {location}: {payload}");
+    }));
+
+    log::info!("Starting clivilization-engine");
+
+    let _ai: AI = AI::new("openai/gpt-4o-mini");
 
     // Use clap to parse a --test-color flag for testing color schemes
     let matches = Args::parse();
@@ -65,16 +85,21 @@ async fn main() -> Result<()> {
     }
 
     // Load config if provided
+    log::info!("Loading game configuration");
     let mut game = if let Some(config_path) = matches.config {
+        log::info!("Loading config from {}", config_path);
         game::Game::from_file(&config_path)?
     } else if let Some(blob_str) = blob {
+        log::info!("Loading config from embedded blob");
         game::Game::from_string(blob_str)?
     } else {
+        log::info!("Creating default game instance");
         game::Game::new()
     };
 
     // If headless, run a simple stdin-driven loop and avoid initializing terminal or crossterm
     if matches.headless {
+        log::info!("Starting in headless mode");
         use crate::game::RandomAi;
         use std::io::{BufRead, BufReader};
 
@@ -124,6 +149,7 @@ async fn main() -> Result<()> {
                 "apply" => {
                     // apply rest of line as action
                     let action = parts.collect::<Vec<&str>>().join(" ");
+                    log::info!("Applying action from stdin: {}", action);
                     let opened = game.apply_action(&action);
                     if opened {
                         // print snapshot with popup
@@ -141,14 +167,16 @@ async fn main() -> Result<()> {
                 "popup" => {
                     // submit popup input (rest of line)
                     let input = parts.collect::<Vec<&str>>().join(" ");
+                    log::info!("Submitting popup input from stdin: {}", input);
                     let _processed = game.submit_popup_input(&input);
                     // After popup submission, AI may have to act (e.g., popup closed)
                     game.run_ai_for_current_player();
                     let snap = game.snapshot_value();
                     println!("{}", serde_json::to_string(&snap)?);
                 }
-                _ => {
+                other => {
                     // Unknown command -> respond with a helpful message and snapshot
+                    log::warn!("Unknown headless command: {}", other);
                     eprintln!("Unknown command: {trimmed}");
                     let snap = game.snapshot_value();
                     println!("{}", serde_json::to_string(&snap)?);
@@ -158,6 +186,8 @@ async fn main() -> Result<()> {
 
         return Ok(());
     }
+
+    log::info!("Starting UI mode");
 
     // Setup terminal (only for non-headless mode)
     enable_raw_mode().context("failed to enable raw mode")?;
