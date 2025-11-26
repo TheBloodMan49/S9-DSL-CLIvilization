@@ -1,5 +1,5 @@
 use super::map::{GameMap, Terrain};
-use std::collections::{VecDeque, BinaryHeap};
+use std::collections::{BinaryHeap};
 use std::cmp::Reverse;
 use crate::ast::{
     BuildingDef, BuildingInstance, BuildingInstanceArray, City, PlayerType, PrereqArray,

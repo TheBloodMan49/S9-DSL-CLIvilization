@@ -227,6 +227,26 @@ impl Game {
     pub fn handle_key(&mut self, key: crossterm::event::KeyEvent) {
         use crossterm::event::KeyCode;
 
+        // If the game is over, prevent game actions but still allow zoom and entering camera mode.
+        if self.state.game_over {
+            match key.code {
+                KeyCode::Char('z') | KeyCode::Char('Z') => {
+                    self.state.cycle_zoom();
+                    return;
+                }
+                KeyCode::Char('v') | KeyCode::Char('V') => {
+                    // allow entering camera mode to move around
+                    self.state.toggle_camera_mode();
+                    self.ui_state = UiState::CameraMode;
+                    return;
+                }
+                _ => {
+                    // ignore all other keys when game is over
+                    return;
+                }
+            }
+        }
+
         match self.ui_state {
             UiState::Normal => {
                 match key.code {
