@@ -13,7 +13,6 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, prelude::*};
 use std::io;
-use crate::game::ai;
 use crate::game::ai::AI;
 
 #[derive(Parser, Debug)]
@@ -87,7 +86,7 @@ async fn main() -> Result<()> {
     // Load config if provided
     log::info!("Loading game configuration");
     let mut game = if let Some(config_path) = matches.config {
-        log::info!("Loading config from {}", config_path);
+        log::info!("Loading config from {config_path}");
         game::Game::from_file(&config_path)?
     } else if let Some(blob_str) = blob {
         log::info!("Loading config from embedded blob");
@@ -149,7 +148,7 @@ async fn main() -> Result<()> {
                 "apply" => {
                     // apply rest of line as action
                     let action = parts.collect::<Vec<&str>>().join(" ");
-                    log::info!("Applying action from stdin: {}", action);
+                    log::info!("Applying action from stdin: {action}");
                     let opened = game.apply_action(&action);
                     if opened {
                         // print snapshot with popup
@@ -167,7 +166,7 @@ async fn main() -> Result<()> {
                 "popup" => {
                     // submit popup input (rest of line)
                     let input = parts.collect::<Vec<&str>>().join(" ");
-                    log::info!("Submitting popup input from stdin: {}", input);
+                    log::info!("Submitting popup input from stdin: {input}");
                     let _processed = game.submit_popup_input(&input);
                     // After popup submission, AI may have to act (e.g., popup closed)
                     game.run_ai_for_current_player();
@@ -176,7 +175,7 @@ async fn main() -> Result<()> {
                 }
                 other => {
                     // Unknown command -> respond with a helpful message and snapshot
-                    log::warn!("Unknown headless command: {}", other);
+                    log::warn!("Unknown headless command: {other}");
                     eprintln!("Unknown command: {trimmed}");
                     let snap = game.snapshot_value();
                     println!("{}", serde_json::to_string(&snap)?);

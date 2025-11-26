@@ -7,7 +7,6 @@ use ratatui::layout::Rect;
 use ratatui::prelude::{Color, Line, Span, Style};
 use ratatui::widgets::{Block, Borders, Paragraph};
 use std::fmt::{Display, Write};
-use std::os::linux::raw::stat;
 
 #[derive(Clone, Debug)]
 pub enum Terrain {

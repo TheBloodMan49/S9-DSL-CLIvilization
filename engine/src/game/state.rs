@@ -291,7 +291,7 @@ impl GameState {
         }
 
         let parts: Vec<&str> = txt.split_whitespace().collect();
-        match parts.get(0).map(|s| *s) {
+        match parts.first().copied() {
             Some("build") => {
                 // build [type]
                 if parts.len() < 2 {
@@ -321,12 +321,12 @@ impl GameState {
                         }
                     } else {
                         warn!("Unknown building requested by player {}: {}", self.player_turn, bname);
-                        self.open_popup("Build", &format!("Unknown building: {}", bname), vec![]);
+                        self.open_popup("Build", &format!("Unknown building: {bname}"), vec![]);
                         return true;
                     }
                 }
             }
-            Some("hire") | Some("recruit") => {
+            Some("hire" | "recruit") => {
                 if parts.len() < 2 {
                     let choices = self.units.iter().map(|u| u.name.clone()).collect();
                     debug!("Opening Hire popup for player {} (no unit specified)", self.player_turn);
@@ -348,7 +348,7 @@ impl GameState {
                         }
                     } else {
                         warn!("Unknown unit requested by player {}: {}", self.player_turn, uname);
-                        self.open_popup("Hire", &format!("Unknown unit: {}", uname), vec![]);
+                        self.open_popup("Hire", &format!("Unknown unit: {uname}"), vec![]);
                         return true;
                     }
                 }
@@ -392,14 +392,14 @@ impl GameState {
                         }
                     } else {
                         warn!("Unknown attack target requested by player {}: {}", self.player_turn, target);
-                        self.open_popup("Attack", &format!("Unknown target: {}", target), vec![]);
+                        self.open_popup("Attack", &format!("Unknown target: {target}"), vec![]);
                         return true;
                     }
                 }
             }
             _ => {
                 warn!("Unknown action by player {}: {}", self.player_turn, txt);
-                self.open_popup("Action", &format!("Unknown action: {}", txt), vec![]);
+                self.open_popup("Action", &format!("Unknown action: {txt}"), vec![]);
                 return true;
             }
         }
@@ -422,11 +422,10 @@ impl GameState {
         if !popup.choices.is_empty() {
             let sel = popup.input.trim();
             let mut chosen: Option<String> = None;
-            if let Ok(idx) = sel.parse::<usize>() {
-                if idx >= 1 && idx <= popup.choices.len() {
+            if let Ok(idx) = sel.parse::<usize>()
+                && idx >= 1 && idx <= popup.choices.len() {
                     chosen = Some(popup.choices[idx - 1].clone());
                 }
-            }
             if chosen.is_none() {
                 // try match by name
                 for c in &popup.choices {
@@ -495,25 +494,22 @@ impl GameState {
         civ_index: usize,
         building_name: &str,
     ) -> Result<(), String> {
-        debug!("start_construction called: civ={} building='{}'", civ_index, building_name);
-        let bdef = match self.buildings.iter().find(|b| b.name == building_name) {
-            Some(b) => b,
-            None => {
-                warn!("start_construction: unknown building '{}' for civ {}", building_name, civ_index);
-                return Err(format!("Unknown building: {}", building_name));
-            }
+        debug!("start_construction called: civ={civ_index} building='{building_name}'");
+        let bdef = if let Some(b) = self.buildings.iter().find(|b| b.name == building_name) { b } else {
+            warn!("start_construction: unknown building '{building_name}' for civ {civ_index}");
+            return Err(format!("Unknown building: {building_name}"));
         };
         let civ = &mut self.civilizations[civ_index];
         let occupied = civ.city.buildings.elements.len() + civ.constructions.len();
         // Only one construction at a time
         if !civ.constructions.is_empty() {
-            warn!("start_construction: another construction already in progress for civ {}", civ_index);
+            warn!("start_construction: another construction already in progress for civ {civ_index}");
             return Err("Another construction is already in progress".to_string());
         }
 
         // check for available slots
         if occupied >= civ.city.nb_slots_buildings as usize {
-            warn!("start_construction: no available building slots for civ {}", civ_index);
+            warn!("start_construction: no available building slots for civ {civ_index}");
             return Err("No available building slots".to_string());
         }
 
@@ -533,45 +529,39 @@ impl GameState {
 
     // Start recruitment: requires an already-built building that produces this unit
     pub fn start_recruitment(&mut self, civ_index: usize, unit_name: &str) -> Result<(), String> {
-        debug!("start_recruitment called: civ={} unit='{}'", civ_index, unit_name);
-        let udef = match self.units.iter().find(|u| u.name == unit_name) {
-            Some(u) => u,
-            None => {
-                warn!("start_recruitment: unknown unit '{}' for civ {}", unit_name, civ_index);
-                return Err(format!("Unknown unit: {}", unit_name));
-            }
+        debug!("start_recruitment called: civ={civ_index} unit='{unit_name}'");
+        let udef = if let Some(u) = self.units.iter().find(|u| u.name == unit_name) { u } else {
+            warn!("start_recruitment: unknown unit '{unit_name}' for civ {civ_index}");
+            return Err(format!("Unknown unit: {unit_name}"));
         };
         let civ = &mut self.civilizations[civ_index];
         // check for building that can produce this unit (built only)
         let mut producer: Option<&BuildingDef> = None;
         for b_inst in &civ.city.buildings.elements {
-            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
-                if format!("{:?}", bdef.production.prod_type).to_lowercase() == "unit" {
-                    if let Some(prod_id) = &bdef.production.prod_unit_id {
-                        if prod_id == &udef.name {
+            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building)
+                && format!("{:?}", bdef.production.prod_type).to_lowercase() == "unit"
+                    && let Some(prod_id) = &bdef.production.prod_unit_id
+                        && prod_id == &udef.name {
                             producer = Some(bdef);
                             break;
                         }
-                    }
-                }
-            }
         }
         // no producer found
         if producer.is_none() {
-            warn!("start_recruitment: no producer building for unit '{}' civ {}", unit_name, civ_index);
+            warn!("start_recruitment: no producer building for unit '{unit_name}' civ {civ_index}");
             return Err("No building able to produce this unit is present".to_string());
         }
 
         // only one recruitment at a time
         if !civ.recruitments.is_empty() {
-            warn!("start_recruitment: recruitment already in progress for civ {}", civ_index);
+            warn!("start_recruitment: recruitment already in progress for civ {civ_index}");
             return Err("Another recruitment is already in progress".to_string());
         }
 
         // check for available unit slots
         let occupied_units = civ.city.units.units.len() + civ.recruitments.len();
         if occupied_units >= civ.city.nb_slots_units as usize {
-            warn!("start_recruitment: no available unit slots for civ {}", civ_index);
+            warn!("start_recruitment: no available unit slots for civ {civ_index}");
             return Err("No available unit slots".to_string());
         }
 
@@ -579,7 +569,7 @@ impl GameState {
         let bdef = producer.unwrap();
         let cost = bdef.production.cost as i32;
         if civ.resources.ressources < cost {
-            warn!("start_recruitment: not enough resources for civ {} (cost={})", civ_index, cost);
+            warn!("start_recruitment: not enough resources for civ {civ_index} (cost={cost})");
             return Err("Not enough resources to recruit unit".to_string());
         }
         civ.resources.ressources -= cost;
@@ -597,11 +587,10 @@ impl GameState {
         let civ = &mut self.civilizations[player_index];
         // resource from finished buildings
         for b_inst in &civ.city.buildings.elements {
-            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building) {
-                if format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
+            if let Some(bdef) = self.buildings.iter().find(|b| b.name == b_inst.id_building)
+                && format!("{:?}", bdef.production.prod_type).to_lowercase() == "ressource" {
                     civ.resources.ressources += bdef.production.amount as i32;
                 }
-            }
         }
 
         // process constructions
@@ -619,7 +608,7 @@ impl GameState {
             let cons = civ.constructions.remove(idx);
             let id = cons.id_building.clone();
             civ.city.buildings.elements.push(BuildingInstance { id_building: id.clone(), level: 1 });
-            info!("Construction finished for civ {}: {}", player_index, id);
+            info!("Construction finished for civ {player_index}: {id}");
         }
 
         // process recruitments
@@ -727,25 +716,25 @@ impl GameState {
 
     // Remove up to `to_remove` units from a civilization's city (from unit instances), returning how many were actually removed
     fn remove_units_from_city(&mut self, civ_index: usize, mut to_remove: u32) -> u32 {
-        debug!("remove_units_from_city called: civ={} to_remove={}", civ_index, to_remove);
+        debug!("remove_units_from_city called: civ={civ_index} to_remove={to_remove}");
         let civ = &mut self.civilizations[civ_index];
         let mut removed: u32 = 0;
         let mut i = 0;
         while i < civ.city.units.units.len() && to_remove > 0 {
-            let available: u32 = civ.city.units.units[i].nb_units as u32;
+            let available: u32 = civ.city.units.units[i].nb_units;
             if available <= to_remove {
                 removed += available;
                 to_remove -= available;
                 civ.city.units.units.remove(i);
                 // do not increment i since we removed current
             } else {
-                civ.city.units.units[i].nb_units = (available - to_remove) as u32;
+                civ.city.units.units[i].nb_units = available - to_remove;
                 removed += to_remove;
                 to_remove = 0;
                 i += 1;
             }
         }
-        debug!("remove_units_from_city result: removed={} remaining_to_remove={}", removed, to_remove);
+        debug!("remove_units_from_city result: removed={removed} remaining_to_remove={to_remove}");
         removed
     }
 
@@ -779,7 +768,7 @@ impl GameState {
             .units
             .units
             .iter()
-            .map(|u| u.nb_units as u32)
+            .map(|u| u.nb_units)
             .sum();
         if total_units == 0 {
             return Err("No units available to send".to_string());
@@ -801,8 +790,8 @@ impl GameState {
         let b = &self.civilizations[defender_idx].city;
 
         // TODO: BFS ? visual ???
-        let dx = (a.x as i32 - b.x as i32) as f64;
-        let dy = (a.y as i32 - b.y as i32) as f64;
+        let dx = f64::from(a.x as i32 - b.x as i32);
+        let dy = f64::from(a.y as i32 - b.y as i32);
         let dist = (dx * dx + dy * dy).sqrt();
         let movespeed = 3.0_f64;
         let mut turns = (dist / movespeed).ceil() as u32;
@@ -822,8 +811,8 @@ impl GameState {
 
     pub fn move_camera(&mut self, dx: i32, dy: i32) {
         if self.camera_mode {
-            self.camera_x = self.camera_x + dx;
-            self.camera_y = self.camera_y + dy;
+            self.camera_x += dx;
+            self.camera_y += dy;
         }
     }
 

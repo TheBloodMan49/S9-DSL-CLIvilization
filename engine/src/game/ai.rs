@@ -57,18 +57,15 @@ impl AI {
         let chat_completion = match chat_completion_res {
             Ok(c) => c,
             Err(e) => {
-                log::error!("AI chat completion failed: {}", e);
+                log::error!("AI chat completion failed: {e}");
                 return;
             }
         };
 
         let returned_message_opt = chat_completion.choices.first().map(|c| c.message.clone());
-        let returned_message = match returned_message_opt {
-            Some(m) => m,
-            None => {
-                log::warn!("AI chat completion returned no choices");
-                return;
-            }
+        let returned_message = if let Some(m) = returned_message_opt { m } else {
+            log::warn!("AI chat completion returned no choices");
+            return;
         };
 
         self.messages.push(returned_message.clone());

@@ -35,7 +35,7 @@ pub fn init<P: AsRef<Path>>(log_file: P) -> Result<()> {
     let file = OpenOptions::new()
         .create(true)
         .append(true)
-        .write(true)
+        
         .open(path)
         .with_context(|| format!("failed to open log file {path:?}"))?;
 
@@ -46,6 +46,6 @@ pub fn init<P: AsRef<Path>>(log_file: P) -> Result<()> {
     WriteLogger::init(level, config, file).context("failed to initialize file logger")?;
 
     LOGGER_INITIALIZED.set(()).ok();
-    info!("Logger initialized (level={:?}), logging to {path:?}", level);
+    info!("Logger initialized (level={level:?}), logging to {path:?}");
     Ok(())
 }
