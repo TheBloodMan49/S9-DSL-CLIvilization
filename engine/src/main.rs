@@ -148,6 +148,17 @@ async fn main() -> Result<()> {
                 "apply" => {
                     // apply rest of line as action
                     let action = parts.collect::<Vec<&str>>().join(" ");
+
+                    // If current player is AI, refuse to apply human actions
+                    let civ_idx = game.state().player_turn;
+                    if let Some(civ) = game.state().civilizations.get(civ_idx) {
+                        if matches!(civ.city.player_type, ast::PlayerType::AI) {
+                            log::warn!("Headless apply refused: it's AI's turn for civ {}", civ_idx);
+                            println!("{{\"error\":\"cannot apply action: it's AI's turn\"}}");
+                            continue;
+                        }
+                    }
+
                     log::info!("Applying action from stdin: {action}");
                     let opened = game.apply_action(&action);
                     if opened {
@@ -166,6 +177,17 @@ async fn main() -> Result<()> {
                 "popup" => {
                     // submit popup input (rest of line)
                     let input = parts.collect::<Vec<&str>>().join(" ");
+
+                    // If current player is AI, refuse to submit popup input
+                    let civ_idx = game.state().player_turn;
+                    if let Some(civ) = game.state().civilizations.get(civ_idx) {
+                        if matches!(civ.city.player_type, ast::PlayerType::AI) {
+                            log::warn!("Headless popup submit refused: it's AI's turn for civ {}", civ_idx);
+                            println!("{{\"error\":\"cannot submit popup: it's AI's turn\"}}");
+                            continue;
+                        }
+                    }
+
                     log::info!("Submitting popup input from stdin: {input}");
                     let _processed = game.submit_popup_input(&input);
                     // After popup submission, AI may have to act (e.g., popup closed)
@@ -232,6 +254,15 @@ async fn main() -> Result<()> {
             if key.code == KeyCode::Char('q') && key.modifiers.contains(KeyModifiers::CONTROL) {
                 break;
             }
+
+            // If it's currently an AI player's turn, ignore user input (prevent playing on AI's turn)
+            if let Some(civ) = game.state().civilizations.get(game.state().player_turn) {
+                if matches!(civ.city.player_type, ast::PlayerType::AI) {
+                    log::debug!("User input ignored because it's AI's turn: {:?}", key);
+                    continue;
+                }
+            }
+
             // Forward other keys to game handler
             game.handle_key(key);
         }
