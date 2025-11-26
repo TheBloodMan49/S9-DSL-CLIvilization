@@ -97,27 +97,73 @@ impl Display for GameMap {
 }
 
 pub fn generate_map_buffer(state: &GameState) -> Vec<Vec<Color>> {
-    if let Some(buffer) = &state.map_buffer_cache {
+    // Use cached terrain buffer if present, but always overlay dynamic entities (cities, travels)
+    let mut base: Vec<Vec<Color>> = if let Some(buffer) = &state.map_buffer_cache {
         buffer.clone()
     } else {
-        let mut map_buffer: Vec<Vec<Color>> = state
+        state
             .map
             .tiles
             .iter()
             .map(|line| line.iter().map(Terrain::to_style).collect())
-            .collect();
+            .collect()
+    };
 
-        apply_cities_on_map_buffer(state, &mut map_buffer);
-
-        map_buffer
-    }
+    apply_cities_on_map_buffer(state, &mut base);
+    base
 }
 
 pub fn apply_cities_on_map_buffer(state: &GameState, buffer: &mut [Vec<Color>]) {
     for civ in &state.civilizations {
         let city = &civ.city;
+        // draw city
+        if city.y >= 0 && city.x >= 0 && (city.y as usize) < buffer.len() && (city.x as usize) < buffer[0].len() {
+            buffer[city.y as usize][city.x as usize] = str_to_color(&city.color);
+        }
+    }
 
-        buffer[city.y as usize][city.x as usize] = str_to_color(&city.color);
+    // draw traveling units along their paths
+    for t in &state.travels {
+        if t.path.is_empty() { continue; }
+
+        // optionally draw full path when zoomed in (visible when zoom > 1)
+        // draw a continuous path: stop one tile before destination and don't override cities
+        for (i, (sx, sy)) in t.path.iter().enumerate() {
+            // stop before destination (last element)
+            if i + 1 >= t.path.len() { break; }
+            if *sy < 0 || *sx < 0 { continue; }
+            let syu = *sy as usize;
+            let sxu = *sx as usize;
+            if syu >= buffer.len() || sxu >= buffer[0].len() { continue; }
+
+            // don't overwrite city tiles
+            let mut is_city = false;
+            for civ in &state.civilizations {
+                if civ.city.x as usize == sxu && civ.city.y as usize == syu {
+                    is_city = true;
+                    break;
+                }
+            }
+            if is_city { continue; }
+
+            // draw path tile
+            buffer[syu][sxu] = Color::Indexed(8);
+        }
+
+        // compute progress index along path from travel.remaining/total
+        let total_turns = t.total.max(1) as f64;
+        let passed = (t.total - t.remaining) as f64;
+        let fraction = (passed / total_turns).clamp(0.0, 1.0);
+        let total_steps = if t.path.len() >= 1 { t.path.len() - 1 } else { 0 } as f64;
+        // use floor to avoid jumping to the next tile too early
+        let idx = (fraction * total_steps).floor() as usize;
+        let pos = t.path.get(idx).unwrap_or(&t.path[t.path.len()-1]);
+        let (px, py) = *pos;
+        if py >= 0 && px >= 0 && (py as usize) < buffer.len() && (px as usize) < buffer[0].len() {
+            // use attacker's color to mark traveling unit (draw on top of path)
+            let col = ratatui::style::Color::Cyan;
+            buffer[py as usize][px as usize] = col;
+        }
     }
 }
 

@@ -1,4 +1,6 @@
-use super::map::GameMap;
+use super::map::{GameMap, Terrain};
+use std::collections::{VecDeque, BinaryHeap};
+use std::cmp::Reverse;
 use crate::ast::{
     BuildingDef, BuildingInstance, BuildingInstanceArray, City, PlayerType, PrereqArray,
     Production, ProductionType, UnitDef, UnitInstance, UnitInstanceArray,
@@ -88,6 +90,7 @@ pub struct Travel {
     pub amount: u32,
     pub remaining: u32,
     pub total: u32,
+    pub path: Vec<(i32, i32)>,
 }
 
 impl GameState {
@@ -785,19 +788,35 @@ impl GameState {
             return Err("Failed to remove units".to_string());
         }
 
-        // compute travel time based on distance and default movespeed 3 per turn
+        // compute travel path using weighted shortest path allowing water (but not mountain)
         let a = &self.civilizations[attacker_idx].city;
         let b = &self.civilizations[defender_idx].city;
-
-        // TODO: BFS ? visual ???
-        let dx = f64::from(a.x as i32 - b.x as i32);
-        let dy = f64::from(a.y as i32 - b.y as i32);
-        let dist = (dx * dx + dy * dy).sqrt();
-        let movespeed = 3.0_f64;
-        let mut turns = (dist / movespeed).ceil() as u32;
-        if turns == 0 {
-            turns = 1;
+        let src = (a.x.cast_signed(), a.y.cast_signed());
+        let dst = (b.x.cast_signed(), b.y.cast_signed());
+        let path_opt = self.bfs_path(src, dst);
+        if path_opt.is_none() {
+            return Err("No path to target (blocked by terrain)".to_string());
         }
+        let path = path_opt.unwrap();
+        // compute time to traverse the path accounting for water slowdown
+        // default: land tiles move at 3 blocks/turn, water at 1 block/turn
+        let land_speed = 3.0_f64; // blocks per turn on land
+        let water_speed = 1.0_f64; // blocks per turn on water
+        let mut total_time: f64 = 0.0;
+        if path.len() >= 2 {
+            for i in 1..path.len() {
+                let (nx, ny) = path[i];
+                let terrain = &self.map.tiles[ny as usize][nx as usize];
+                let step_time = match terrain {
+                    Terrain::Water => 1.0 / water_speed,
+                    Terrain::Mountain => continue, // should not happen, mountain is impassable
+                    _ => 1.0 / land_speed,
+                };
+                total_time += step_time;
+            }
+        }
+        let mut turns = total_time.ceil() as u32;
+        if turns == 0 { turns = 1; }
 
         self.travels.push(Travel {
             attacker: attacker_idx,
@@ -805,8 +824,67 @@ impl GameState {
             amount: removed,
             remaining: turns,
             total: turns,
+            path,
         });
         Ok(())
+    }
+
+    // Weighted shortest-path (Dijkstra) on the map allowing water (higher cost) and avoiding mountains
+    fn bfs_path(&self, src: (i32, i32), dst: (i32, i32)) -> Option<Vec<(i32, i32)>> {
+        let width = self.map.width as i32;
+        let height = self.map.height as i32;
+        let (sx, sy) = src;
+        let (dx, dy) = dst;
+        if sx < 0 || sy < 0 || dx < 0 || dy < 0 { return None; }
+        if sx >= width || sy >= height || dx >= width || dy >= height { return None; }
+
+        // Dijkstra structures (integer scaled costs to avoid f64 ordering issues)
+        const SCALE: i64 = 1000; // 1.0 turn == 1000 units
+        let mut dist: Vec<Vec<i64>> = vec![vec![i64::MAX; width as usize]; height as usize];
+        let mut parent: Vec<Vec<Option<(i32,i32)>>> = vec![vec![None; width as usize]; height as usize];
+        // min-heap of (cost, x, y) using Reverse to get smallest cost
+        let mut heap: BinaryHeap<Reverse<(i64, i32, i32)>> = BinaryHeap::new();
+
+        dist[sy as usize][sx as usize] = 0;
+        heap.push(Reverse((0, sx, sy)));
+
+        let neighbors = [(-1,0),(1,0),(0,-1),(0,1)];
+        while let Some(Reverse((cost, cx, cy))) = heap.pop() {
+            if cost > dist[cy as usize][cx as usize] { continue; }
+            if (cx, cy) == (dx, dy) {
+                // reconstruct path
+                let mut path = Vec::new();
+                let mut cur = Some((cx, cy));
+                while let Some(p) = cur {
+                    path.push(p);
+                    cur = parent[p.1 as usize][p.0 as usize];
+                }
+                path.reverse();
+                return Some(path);
+            }
+
+            for (ox, oy) in neighbors.iter() {
+                let nx = cx + ox;
+                let ny = cy + oy;
+                if nx < 0 || ny < 0 || nx >= width || ny >= height { continue; }
+                // check terrain of destination tile
+                let terrain = &self.map.tiles[ny as usize][nx as usize];
+                if matches!(terrain, Terrain::Mountain) { continue; }
+                // cost per step scaled as integers: water slower, land faster
+                let step_cost_scaled: i64 = match terrain {
+                    Terrain::Water => SCALE,        // 1.0 turn == SCALE units
+                    _ => (SCALE as f64 / 3.0).round() as i64, // land: ~1/3 turn
+                };
+                let new_cost = cost.saturating_add(step_cost_scaled);
+                if new_cost < dist[ny as usize][nx as usize] {
+                    dist[ny as usize][nx as usize] = new_cost;
+                    parent[ny as usize][nx as usize] = Some((cx, cy));
+                    heap.push(Reverse((new_cost, nx, ny)));
+                }
+            }
+        }
+
+        None
     }
 
     pub fn move_camera(&mut self, dx: i32, dy: i32) {

@@ -4,9 +4,9 @@
       "cities": [
         {
           "name": "Demacia",
-          "x": 5,
-          "y": 4,
-          "color": "#FFCC00",
+          "x": 8,
+          "y": 10,
+          "color": "#bf9d17",
           "starting_resources": 15,
           "player_type": "PLAYER",
           "nb_slots_buildings": 2,
@@ -20,8 +20,8 @@
         },
         {
           "name": "Noxus",
-          "x": 15,
-          "y": 5,
+          "x": 90,
+          "y": 20,
           "color": "#CC0000",
           "starting_resources": 12,
           "player_type": "AI",
