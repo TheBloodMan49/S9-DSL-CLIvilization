@@ -44,7 +44,7 @@ async fn main() -> Result<()> {
     }
 
     // Initialize file logger as early as possible so any startup errors are logged
-    logger::init("logs/game.log").context("failed to initialize logger")?;
+    logger::init("output/game.log").context("failed to initialize logger")?;
 
     // Install a panic hook so unexpected panics are recorded to the log file
     std::panic::set_hook(Box::new(|panic_info| {

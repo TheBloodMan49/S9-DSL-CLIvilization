@@ -4,6 +4,7 @@ use crate::ast::{
     Production, ProductionType, UnitDef, UnitInstance, UnitInstanceArray,
 };
 use ratatui::style::Color;
+use log::{debug, info, warn};
 
 #[derive(Debug)]
 pub struct Civilization {
@@ -267,6 +268,7 @@ impl GameState {
     // submit the current action text; returns true if a popup was opened for further input
     pub fn submit_action(&mut self) -> bool {
         let txt = self.action_input.trim().to_lowercase();
+        debug!("submit_action called (player={}): '{}'", self.player_turn, txt);
         if txt.is_empty() {
             self.action_editing = false;
             self.action_input.clear();
@@ -280,6 +282,7 @@ impl GameState {
                 self.turn += 1;
             }
             // process turn start effects
+            info!("Player ended turn; new player_turn={} turn={}", self.player_turn, self.turn);
             self.on_turn_start(self.player_turn);
 
             self.action_input.clear();
@@ -294,6 +297,7 @@ impl GameState {
                 if parts.len() < 2 {
                     // open popup to choose building type
                     let choices = self.buildings.iter().map(|b| b.name.clone()).collect();
+                    debug!("Opening Build popup for player {} (no building specified)", self.player_turn);
                     self.open_popup("Build", "Choose building type:", choices);
                     return true;
                 } else {
@@ -306,13 +310,17 @@ impl GameState {
                         // attempt to start construction
                         let name = bdef.name.clone();
                         match self.start_construction(self.player_turn, &name) {
-                            Ok(()) => {}
+                            Ok(()) => {
+                                info!("Started construction '{}' for civ {}", name, self.player_turn);
+                            }
                             Err(err) => {
+                                warn!("Failed to start construction for civ {}: {}", self.player_turn, err);
                                 self.open_popup("Build", &err, vec![]);
                                 return true;
                             }
                         }
                     } else {
+                        warn!("Unknown building requested by player {}: {}", self.player_turn, bname);
                         self.open_popup("Build", &format!("Unknown building: {}", bname), vec![]);
                         return true;
                     }
@@ -321,6 +329,7 @@ impl GameState {
             Some("hire") | Some("recruit") => {
                 if parts.len() < 2 {
                     let choices = self.units.iter().map(|u| u.name.clone()).collect();
+                    debug!("Opening Hire popup for player {} (no unit specified)", self.player_turn);
                     self.open_popup("Hire", "Choose unit to hire:", choices);
                     return true;
                 } else {
@@ -328,13 +337,17 @@ impl GameState {
                     if let Some(udef) = self.units.iter().find(|u| u.name.to_lowercase() == uname) {
                         let uname_owned = udef.name.clone();
                         match self.start_recruitment(self.player_turn, &uname_owned) {
-                            Ok(()) => {}
+                            Ok(()) => {
+                                info!("Started recruitment '{}' for civ {}", uname_owned, self.player_turn);
+                            }
                             Err(err) => {
+                                warn!("Failed to start recruitment for civ {}: {}", self.player_turn, err);
                                 self.open_popup("Hire", &err, vec![]);
                                 return true;
                             }
                         }
                     } else {
+                        warn!("Unknown unit requested by player {}: {}", self.player_turn, uname);
                         self.open_popup("Hire", &format!("Unknown unit: {}", uname), vec![]);
                         return true;
                     }
@@ -350,6 +363,7 @@ impl GameState {
                         .filter(|(i, _)| *i != self.player_turn)
                         .map(|(_, c)| c.city.name.clone())
                         .collect();
+                    debug!("Opening Attack popup for player {} (no target specified)", self.player_turn);
                     self.open_popup("Attack", "Choose player to attack:", choices);
                     return true;
                 } else {
@@ -367,19 +381,24 @@ impl GameState {
                             None
                         };
                         match self.start_attack(self.player_turn, idx, amount) {
-                            Ok(()) => {}
+                            Ok(()) => {
+                                info!("Started attack from {} to {} (amount {:?})", self.player_turn, idx, amount);
+                            }
                             Err(e) => {
+                                warn!("Failed to start attack for civ {}: {}", self.player_turn, e);
                                 self.open_popup("Attack", &e, vec![]);
                                 return true;
                             }
                         }
                     } else {
+                        warn!("Unknown attack target requested by player {}: {}", self.player_turn, target);
                         self.open_popup("Attack", &format!("Unknown target: {}", target), vec![]);
                         return true;
                     }
                 }
             }
             _ => {
+                warn!("Unknown action by player {}: {}", self.player_turn, txt);
                 self.open_popup("Action", &format!("Unknown action: {}", txt), vec![]);
                 return true;
             }
@@ -394,9 +413,11 @@ impl GameState {
     // submit popup input (interpret selection or text)
     pub fn submit_popup(&mut self) {
         if self.popup.is_none() {
+            debug!("submit_popup called but no popup present (player {})", self.player_turn);
             return;
         }
         let popup = self.popup.as_ref().unwrap().clone();
+        debug!("submit_popup called for '{}' (player {}), input='{}'", popup.title, self.player_turn, popup.input);
         // if choices exist, try to parse input as index or name
         if !popup.choices.is_empty() {
             let sel = popup.input.trim();
@@ -423,18 +444,22 @@ impl GameState {
                         if let Some(bdef) = self.buildings.iter().find(|b| b.name == ch) {
                             let name = bdef.name.clone();
                             if let Err(err) = self.start_construction(self.player_turn, &name) {
+                                warn!("start_construction failed in popup for civ {}: {}", self.player_turn, err);
                                 self.open_popup("Build", &err, vec![]);
                                 return;
                             }
+                            info!("Construction started from popup for civ {}: {}", self.player_turn, name);
                         }
                     }
                     "Hire" => {
                         if let Some(udef) = self.units.iter().find(|u| u.name == ch) {
                             let name = udef.name.clone();
                             if let Err(err) = self.start_recruitment(self.player_turn, &name) {
+                                warn!("start_recruitment failed in popup for civ {}: {}", self.player_turn, err);
                                 self.open_popup("Hire", &err, vec![]);
                                 return;
                             }
+                            info!("Recruitment started from popup for civ {}: {}", self.player_turn, name);
                         }
                     }
                     "Attack" => {
@@ -445,9 +470,11 @@ impl GameState {
                             .find(|(_, c)| c.city.name == ch)
                         {
                             if let Err(e) = self.start_attack(self.player_turn, idx, None) {
+                                warn!("start_attack failed in popup for civ {}: {}", self.player_turn, e);
                                 self.open_popup("Attack", &e, vec![]);
                                 return;
                             }
+                            info!("Attack started from popup for civ {} -> {}", self.player_turn, idx);
                         }
                     }
                     _ => {}
@@ -468,24 +495,31 @@ impl GameState {
         civ_index: usize,
         building_name: &str,
     ) -> Result<(), String> {
+        debug!("start_construction called: civ={} building='{}'", civ_index, building_name);
         let bdef = match self.buildings.iter().find(|b| b.name == building_name) {
             Some(b) => b,
-            None => return Err(format!("Unknown building: {}", building_name)),
+            None => {
+                warn!("start_construction: unknown building '{}' for civ {}", building_name, civ_index);
+                return Err(format!("Unknown building: {}", building_name));
+            }
         };
         let civ = &mut self.civilizations[civ_index];
         let occupied = civ.city.buildings.elements.len() + civ.constructions.len();
         // Only one construction at a time
         if !civ.constructions.is_empty() {
+            warn!("start_construction: another construction already in progress for civ {}", civ_index);
             return Err("Another construction is already in progress".to_string());
         }
 
         // check for available slots
         if occupied >= civ.city.nb_slots_buildings as usize {
+            warn!("start_construction: no available building slots for civ {}", civ_index);
             return Err("No available building slots".to_string());
         }
 
         // check resources
         if civ.resources.ressources < bdef.cost as i32 {
+            warn!("start_construction: not enough resources for civ {} (cost={})", civ_index, bdef.cost);
             return Err("Not enough resources for building".to_string());
         }
         civ.resources.ressources -= bdef.cost as i32;
@@ -499,9 +533,13 @@ impl GameState {
 
     // Start recruitment: requires an already-built building that produces this unit
     pub fn start_recruitment(&mut self, civ_index: usize, unit_name: &str) -> Result<(), String> {
+        debug!("start_recruitment called: civ={} unit='{}'", civ_index, unit_name);
         let udef = match self.units.iter().find(|u| u.name == unit_name) {
             Some(u) => u,
-            None => return Err(format!("Unknown unit: {}", unit_name)),
+            None => {
+                warn!("start_recruitment: unknown unit '{}' for civ {}", unit_name, civ_index);
+                return Err(format!("Unknown unit: {}", unit_name));
+            }
         };
         let civ = &mut self.civilizations[civ_index];
         // check for building that can produce this unit (built only)
@@ -520,17 +558,20 @@ impl GameState {
         }
         // no producer found
         if producer.is_none() {
+            warn!("start_recruitment: no producer building for unit '{}' civ {}", unit_name, civ_index);
             return Err("No building able to produce this unit is present".to_string());
         }
 
         // only one recruitment at a time
         if !civ.recruitments.is_empty() {
+            warn!("start_recruitment: recruitment already in progress for civ {}", civ_index);
             return Err("Another recruitment is already in progress".to_string());
         }
 
         // check for available unit slots
         let occupied_units = civ.city.units.units.len() + civ.recruitments.len();
         if occupied_units >= civ.city.nb_slots_units as usize {
+            warn!("start_recruitment: no available unit slots for civ {}", civ_index);
             return Err("No available unit slots".to_string());
         }
 
@@ -538,6 +579,7 @@ impl GameState {
         let bdef = producer.unwrap();
         let cost = bdef.production.cost as i32;
         if civ.resources.ressources < cost {
+            warn!("start_recruitment: not enough resources for civ {} (cost={})", civ_index, cost);
             return Err("Not enough resources to recruit unit".to_string());
         }
         civ.resources.ressources -= cost;
@@ -551,6 +593,7 @@ impl GameState {
 
     // Called at the start of each turn: decrease timers, finalize constructions/recruits, give resource production
     pub fn on_turn_start(&mut self, player_index: usize) {
+        info!("on_turn_start: player {} turn={}", player_index, self.turn);
         let civ = &mut self.civilizations[player_index];
         // resource from finished buildings
         for b_inst in &civ.city.buildings.elements {
@@ -574,10 +617,9 @@ impl GameState {
         // finalize in reverse order to remove by index safely
         for idx in finished_builds.into_iter().rev() {
             let cons = civ.constructions.remove(idx);
-            civ.city.buildings.elements.push(BuildingInstance {
-                id_building: cons.id_building,
-                level: 1,
-            });
+            let id = cons.id_building.clone();
+            civ.city.buildings.elements.push(BuildingInstance { id_building: id.clone(), level: 1 });
+            info!("Construction finished for civ {}: {}", player_index, id);
         }
 
         // process recruitments
@@ -593,21 +635,21 @@ impl GameState {
         for idx in finished_recruits.into_iter().rev() {
             let rec = civ.recruitments.remove(idx);
             // add unit instance (merge if existing)
+            let id_unit = rec.id_unit.clone();
             if let Some(ui) = civ
                 .city
                 .units
                 .units
                 .iter_mut()
-                .find(|u| u.id_units == rec.id_unit)
+                .find(|u| u.id_units == id_unit)
             {
                 ui.nb_units += rec.amount;
             } else {
-                civ.city.units.units.push(UnitInstance {
-                    id_units: rec.id_unit,
-                    nb_units: rec.amount,
-                });
+                civ.city.units.units.push(UnitInstance { id_units: id_unit.clone(), nb_units: rec.amount });
             }
+            info!("Recruitment finished for civ {}: {} (+{} units)", player_index, id_unit, rec.amount);
         }
+
         // process travels (attacks in transit)
         let mut arrived: Vec<usize> = Vec::new();
         for (i, t) in self.travels.iter_mut().enumerate() {
@@ -645,6 +687,7 @@ impl GameState {
                     ),
                     vec![],
                 );
+                info!("Battle resolved: attacker {} defeated defender {}", t.attacker, t.defender);
             } else {
                 // defender holds: attacker units are lost (they were removed when sent); defender loses some units as casualties
                 let casualties = (attacker_power as u32) / 2;
@@ -661,6 +704,7 @@ impl GameState {
                     ),
                     vec![],
                 );
+                info!("Battle resolved: attacker {} failed against {} (defender lost {} units)", t.attacker, t.defender, lost);
             }
         }
 
@@ -683,6 +727,7 @@ impl GameState {
 
     // Remove up to `to_remove` units from a civilization's city (from unit instances), returning how many were actually removed
     fn remove_units_from_city(&mut self, civ_index: usize, mut to_remove: u32) -> u32 {
+        debug!("remove_units_from_city called: civ={} to_remove={}", civ_index, to_remove);
         let civ = &mut self.civilizations[civ_index];
         let mut removed: u32 = 0;
         let mut i = 0;
@@ -700,6 +745,7 @@ impl GameState {
                 i += 1;
             }
         }
+        debug!("remove_units_from_city result: removed={} remaining_to_remove={}", removed, to_remove);
         removed
     }
 
