@@ -171,8 +171,10 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
 }
 
 fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
-    // Show current action input (editable)
-    let action_text = if state.action_editing {
+    // Show AI thinking message if AI is processing
+    let action_text = if state.ai_thinking {
+        "⏳ AI is thinking, please wait...".to_string()
+    } else if state.action_editing {
         format!("{}_", state.action_input)
     } else if !state.action_input.is_empty() {
         state.action_input.clone()

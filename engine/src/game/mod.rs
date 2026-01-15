@@ -525,13 +525,36 @@ impl Game {
         // safety cap to avoid infinite loops from buggy AIs
         const MAX_ACTIONS: usize = 256;
         let mut actions_done = 0usize;
+        let initial_player = self.state.player_turn;
+
+        // Check if current player is AI before starting
+        let civ_idx = self.state.player_turn;
+        if civ_idx >= self.ais.len() || self.ais[civ_idx].is_none() {
+            return;
+        }
+        
+        if let Some(civ) = self.state.civilizations.get(civ_idx) {
+            use crate::ast::PlayerType;
+            if !matches!(civ.city.player_type, PlayerType::AI) {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        // Set AI thinking flag and clear action input
+        self.state.ai_thinking = true;
+        self.state.action_input.clear();
+        self.state.action_editing = false;
 
         loop {
             if actions_done >= MAX_ACTIONS {
-                log::warn!("AI action loop reached MAX_ACTIONS ({MAX_ACTIONS})");
+                log::warn!("AI action loop reached MAX_ACTIONS ({MAX_ACTIONS}), forcing end turn");
+                self.step();
                 break;
             }
             let civ_idx = self.state.player_turn;
+
             // if there is no AI registered for this civ, stop
             if civ_idx >= self.ais.len() {
                 log::debug!("No AI registered for civ {civ_idx} (out of range)");
@@ -551,6 +574,12 @@ impl Game {
                 }
             } else {
                 log::warn!("Civ {civ_idx} not found in state");
+                break;
+            }
+
+            // Check if turn has changed from initial player (AI said "end" successfully)
+            if civ_idx != initial_player {
+                log::debug!("AI turn completed, player changed from {initial_player} to {civ_idx}");
                 break;
             }
 
@@ -580,15 +609,13 @@ impl Game {
             } else {
                 log::info!("AI returned no action for civ {civ_idx}; ending turn");
                 self.step();
+                break;
             }
 
             actions_done += 1;
-
-            let new_civ = self.state.player_turn;
-            if new_civ >= self.ais.len() || self.ais[new_civ].is_none() {
-                log::debug!("Next civ {new_civ} has no AI, stopping AI loop");
-                break;
-            }
         }
+        
+        // Clear AI thinking flag when done
+        self.state.ai_thinking = false;
     }
 }

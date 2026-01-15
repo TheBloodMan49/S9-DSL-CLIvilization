@@ -59,6 +59,8 @@ pub struct GameState {
     pub travels: Vec<Travel>,
     // game over flag
     pub game_over: bool,
+    // AI thinking indicator
+    pub ai_thinking: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -162,6 +164,7 @@ impl GameState {
             popup: None,
             travels: Vec::new(),
             game_over: false,
+            ai_thinking: false,
             buildings: Vec::from([
                 BuildingDef {
                     name: "Farm".to_string(),

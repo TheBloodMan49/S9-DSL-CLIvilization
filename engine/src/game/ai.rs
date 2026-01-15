@@ -19,26 +19,38 @@ pub struct AI {
 /// `OPENAI_BASE_URL`
 impl AI {
     pub fn new(model: &'static str) -> Self {
+        // Check if credentials are set
+        let has_key = std::env::var("OPENAI_KEY").or_else(|_| std::env::var("OPENAI_API_KEY")).is_ok();
+        let has_url = std::env::var("OPENAI_BASE_URL").or_else(|_| std::env::var("OPENAI_API_BASE")).is_ok();
+
+        if !has_key {
+            log::warn!("OPENAI_KEY or OPENAI_API_KEY environment variable not set - AI will not work properly");
+        }
+        if !has_url {
+            log::warn!("OPENAI_BASE_URL or OPENAI_API_BASE environment variable not set - using default OpenAI endpoint");
+        }
+
         AI {
             credentials: Credentials::from_env(),
             model,
             messages: vec![ChatCompletionMessage {
                 role: ChatCompletionMessageRole::System,
-                content: Some("You are an AI playing a civilization like game in TUI\
-                You will be given the rules.\
-                You will be give a map of the world.\
-                You will be given the output format.\
-                For each turn you will be given the list of possible inputs.\
-                You will have to select an input and output it as a json.\
-                Rules:
-                    - This is a human vs AI game.
-                    - This is a turn based game.
-                    - The human always plays before the AI (you).
-                    - Each player has one city.
-                    - To win you must destroy your opponent's city.
-                    - Each turn you can select zero or multiple actions.
-                    - To finish your turn you MUST say end.
-                ".to_string()),
+                content: Some("You are an AI playing a civilization-like game in a text interface.\
+                \nRules:\
+                \n- This is a turn-based game between human and AI players.\
+                \n- Each player has one city.\
+                \n- To win, you must destroy your opponent's city.\
+                \n- Each turn you can perform MULTIPLE actions (build, hire, attack).\
+                \n- When you're done with your actions, you MUST say 'end' to finish your turn.\
+                \n- I will ask you for one action at a time. After each action succeeds, I'll ask again.\
+                \n- Keep doing actions until you feel ready, then say 'end'.\
+                \n\nIMPORTANT: Your response must ONLY be the action string, nothing else. Do NOT use JSON, do NOT use code blocks, do NOT add explanations.\
+                \nValid action formats:\
+                \n- 'end' (to end your turn)\
+                \n- 'build <building_name>' (e.g., 'build farm')\
+                \n- 'hire <unit_name>' (e.g., 'hire warrior')\
+                \n- 'attack <player_name>' (e.g., 'attack player1')\
+                \n\nRespond with ONLY the action text, exactly as shown above.".to_string()),
                 ..Default::default()
             }],
         }
@@ -54,6 +66,7 @@ impl AI {
 
         self.messages.push(message);
 
+        log::debug!("Sending {} messages to LLM (model={})", self.messages.len(), self.model);
         let chat_completion_res = ChatCompletionDelta::builder(self.model, self.messages.clone())
             .credentials(self.credentials.clone())
             .create()
@@ -67,9 +80,10 @@ impl AI {
             }
         };
 
+        log::debug!("Chat completion received with {} choices", chat_completion.choices.len());
         let returned_message_opt = chat_completion.choices.first().map(|c| c.message.clone());
         let Some(returned_message) = returned_message_opt else {
-                log::warn!("AI chat completion returned no choices");
+                log::warn!("AI chat completion returned no choices (model={}, messages={})", self.model, self.messages.len());
                 return None;
             };
 
@@ -95,6 +109,45 @@ pub struct LlmAi {
 }
 
 impl LlmAi {
+    /// Clean LLM response by stripping JSON formatting, code blocks, and other noise
+    fn clean_llm_response(response: &str) -> String {
+        let mut cleaned = response.trim().to_string();
+
+        // Remove markdown code blocks (```json, ```, etc.)
+        if cleaned.starts_with("```") {
+            // Find first newline after opening ```
+            if let Some(first_newline) = cleaned.find('\n') {
+                cleaned = cleaned[first_newline + 1..].to_string();
+            }
+            // Remove closing ```
+            if let Some(last_backticks) = cleaned.rfind("```") {
+                cleaned = cleaned[..last_backticks].to_string();
+            }
+        }
+
+        cleaned = cleaned.trim().to_string();
+
+        // Try to parse as JSON and extract "action" field
+        if cleaned.starts_with('{') && cleaned.ends_with('}') {
+            // Simple JSON parsing for {"action": "..."} format
+            if let Some(action_start) = cleaned.find("\"action\"") {
+                let after_action = &cleaned[action_start + 8..]; // Skip "action"
+                if let Some(colon_pos) = after_action.find(':') {
+                    let after_colon = &after_action[colon_pos + 1..];
+                    if let Some(quote_start) = after_colon.find('"') {
+                        let after_quote = &after_colon[quote_start + 1..];
+                        if let Some(quote_end) = after_quote.find('"') {
+                            return after_quote[..quote_end].trim().to_string();
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return cleaned response
+        cleaned
+    }
+
     pub fn new(model: &'static str) -> Self {
         let (tx, rx): (Sender<LlmRequest>, Receiver<LlmRequest>) = mpsc::channel();
 
@@ -107,26 +160,40 @@ impl LlmAi {
                 match req {
                     LlmRequest::SelectAction(view, civ_idx, resp_tx) => {
                         // Build a simple prompt describing the view and possible actions
-                        let mut prompt = format!("Turn: {}\nPlayer index: {}\nPlayers:\n", view.turn, civ_idx);
+                        let mut prompt = format!("=== TURN {} ===\nYou are player: {}\n\nPlayers:\n", view.turn, view.players.get(civ_idx).map(|p| &p.name).unwrap_or(&"Unknown".to_string()));
                         for (i, p) in view.players.iter().enumerate() {
-                            prompt.push_str(&format!("- {}: resources={} buildings={} units={}\n", p.name, p.resources, p.buildings, p.units));
+                            let marker = if i == civ_idx { " <- YOU" } else { "" };
+                            prompt.push_str(&format!("  {} - Resources: {}, Buildings: {}, Units: {}{}\n",
+                                p.name, p.resources, p.buildings, p.units, marker));
                         }
-                        prompt.push_str("Possible buildings:\n");
+                        prompt.push_str("\nAvailable buildings to build:\n");
                         for b in &view.buildings {
-                            prompt.push_str(&format!("- {b}\n"));
+                            prompt.push_str(&format!("  - {}\n", b.to_lowercase()));
                         }
-                        prompt.push_str("Possible units:\n");
+                        prompt.push_str("\nAvailable units to hire:\n");
                         for u in &view.units {
-                            prompt.push_str(&format!("- {u}\n"));
+                            prompt.push_str(&format!("  - {}\n", u.to_lowercase()));
                         }
-                        prompt.push_str("\nChoose one action (exactly as the action string, e.g. 'end' or 'build Farm' or 'hire Warrior' or 'attack playername'):\n");
+                        prompt.push_str("\nYour action (respond with ONLY ONE of these, nothing else):\n");
+                        prompt.push_str("  end\n");
+                        for b in &view.buildings {
+                            prompt.push_str(&format!("  build {}\n", b.to_lowercase()));
+                        }
+                        for u in &view.units {
+                            prompt.push_str(&format!("  hire {}\n", u.to_lowercase()));
+                        }
+                        for (i, p) in view.players.iter().enumerate() {
+                            if i != civ_idx {
+                                prompt.push_str(&format!("  attack {}\n", p.name.to_lowercase()));
+                            }
+                        }
 
                         let res = rt.block_on(ai_client.send_message(prompt));
-                        // If model returns nothing, default to end
-                        let out = res.or_else(|| Some("end".to_string()));
+                        // Parse and clean the response
+                        let out = res.map(|s| Self::clean_llm_response(&s)).or_else(|| Some("end".to_string()));
                         let _ = resp_tx.send(out);
                     }
-                    LlmRequest::SelectPopupInput(view, civ_idx, popup, resp_tx) => {
+                    LlmRequest::SelectPopupInput(_view, civ_idx, popup, resp_tx) => {
                         // Build prompt describing popup
                         let mut prompt = format!("Popup for player {}: {}\nPrompt: {}\nChoices:\n", civ_idx, popup.title, popup.prompt);
                         for (i, c) in popup.choices.iter().enumerate() {

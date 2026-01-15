@@ -107,6 +107,7 @@ async fn main() -> Result<()> {
 
         // Register AIs for headless mode
         // First collect indices to avoid borrowing `game` immutably while mutating it
+        let ai_model = std::env::var("AI_MODEL").unwrap_or_else(|_| "openai/gpt-4o-mini".to_string());
         let mut ai_indices: Vec<usize> = Vec::new();
         for (i, civ) in game.state().civilizations.iter().enumerate() {
             if matches!(civ.city.player_type, ast::PlayerType::AI) {
@@ -114,7 +115,8 @@ async fn main() -> Result<()> {
             }
         }
         for i in ai_indices {
-            game.register_ai(i, Box::new(LlmAi::new("openai/gpt-4o-mini")));
+            game.register_ai(i, Box::new(LlmAi::new(Box::leak(ai_model.clone().into_boxed_str()))));
+            log::info!("Registered AI for civ {} (headless) with model {}", i, ai_model);
         }
 
         // Emit initial snapshot
@@ -242,6 +244,7 @@ async fn main() -> Result<()> {
     // Register AIs for UI mode as well so the UI can auto-play AI turns
     if !matches.headless {
         use crate::game::ai::LlmAi;
+        let ai_model = std::env::var("AI_MODEL").unwrap_or_else(|_| "openai/gpt-4o-mini".to_string());
         let mut ai_indices: Vec<usize> = Vec::new();
         for (i, civ) in game.state().civilizations.iter().enumerate() {
             if matches!(civ.city.player_type, ast::PlayerType::AI) {
@@ -249,13 +252,16 @@ async fn main() -> Result<()> {
             }
         }
         for i in ai_indices {
-            game.register_ai(i, Box::new(LlmAi::new("openai/gpt-4o-mini")));
-            log::info!("Registered LlmAi for civ {} (UI)", i);
+            game.register_ai(i, Box::new(LlmAi::new(Box::leak(ai_model.clone().into_boxed_str()))));
+            log::info!("Registered LlmAi for civ {} (UI) with model {}", i, ai_model);
         }
     }
 
     // Game loop
     loop {
+        // If current player is AI, run their turn before drawing
+        game.run_ai_for_current_player();
+
         // Draw frame
         game.run(&mut terminal)?;
 

@@ -34,8 +34,8 @@ pub fn init<P: AsRef<Path>>(log_file: P) -> Result<()> {
 
     let file = OpenOptions::new()
         .create(true)
-        .append(true)
-        
+        .write(true)
+        .truncate(true)
         .open(path)
         .with_context(|| format!("failed to open log file {path:?}"))?;
 
