@@ -37,9 +37,11 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Load .env file
-    if dotenvy::dotenv().ok().is_none() {
-        return Err(anyhow::anyhow!("Missing .env file"));
+    // Load .env file (optional)
+    if dotenvy::dotenv().is_err() {
+        eprintln!("Warning: No .env file found. Environment variables must be set manually.");
+        eprintln!("Required for AI: OPENAI_KEY or OPENAI_API_KEY");
+        eprintln!("Optional: OPENAI_BASE_URL or OPENAI_API_BASE, AI_MODEL, LOG_LEVEL");
     }
 
     // Initialize file logger as early as possible so any startup errors are logged

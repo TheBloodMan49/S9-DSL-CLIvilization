@@ -1,5 +1,15 @@
 use anyhow::{Result, anyhow};
 
+/// Hash a string using FNV-1a algorithm.
+/// 
+/// This is a simple non-cryptographic hash function useful for generating
+/// deterministic seeds from text input.
+/// 
+/// # Arguments
+/// * `text` - The string to hash
+/// 
+/// # Returns
+/// A 32-bit hash value
 pub fn hash_tmb(text: String) -> u32 {
     let mut hash: u32 = 2166136261; // FNV offset basis
 
@@ -11,6 +21,15 @@ pub fn hash_tmb(text: String) -> u32 {
     hash
 }
 
+/// Convert HSV color values to RGB.
+/// 
+/// # Arguments
+/// * `h` - Hue (0.0 to 360.0)
+/// * `s` - Saturation (0.0 to 1.0)
+/// * `v` - Value/Brightness (0.0 to 1.0)
+/// 
+/// # Returns
+/// A tuple of (red, green, blue) values from 0 to 255
 pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     let c = v * s;
     let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -33,6 +52,13 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     (r, g, b)
 }
 
+/// Parse an HTML hex color string into a ratatui Color.
+/// 
+/// # Arguments
+/// * `s` - Color string in the format "#RRGGBB"
+/// 
+/// # Returns
+/// A ratatui Color, or white if the format is invalid
 pub fn str_to_color(s: &str) -> ratatui::style::Color {
     // Str is in html hex format: #RRGGBB
     if s.len() != 7 || !s.starts_with('#') {
@@ -45,9 +71,22 @@ pub fn str_to_color(s: &str) -> ratatui::style::Color {
     }
 }
 
+/// Write content to a file in the output directory.
+/// 
+/// Creates the output directory if it doesn't exist.
+/// 
+/// # Arguments
+/// * `filename` - Name of the file (will be written to output/filename)
+/// * `content` - Content to write to the file
+/// 
+/// # Returns
+/// Ok(()) on success, or an error if the operation fails
 pub fn write_to_file(filename: &str, content: &str) -> Result<()> {
     // Create output/ directory if it doesn't exist
-    std::fs::create_dir_all("output")?;
+    if let Err(e) = std::fs::create_dir_all("output") {
+        log::error!("Failed to create output/ directory: {e}");
+        return Err(anyhow!("Failed to create output/ directory: {e}"));
+    }
     let filepath = format!("output/{filename}");
     if let Err(e) = std::fs::write(&filepath, content) {
         log::error!("Failed to write to file {filepath}: {e}");

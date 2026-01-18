@@ -519,8 +519,17 @@ impl Game {
         }
     }
 
-    /// If the current player is controlled by an AI, make that AI play until it ends its turn.
-    /// This method will repeatedly ask the AI for actions and apply them.
+    /// Execute AI actions for the current player if they are AI-controlled.
+    /// 
+    /// This method:
+    /// - Checks if the current player is AI-controlled
+    /// - Repeatedly queries the AI for actions
+    /// - Applies each action and handles any popups
+    /// - Continues until the AI returns None or says "end"
+    /// - Includes a safety limit to prevent infinite loops
+    /// 
+    /// The method is safe to call even if the current player is human-controlled;
+    /// it will simply return immediately.
     pub fn run_ai_for_current_player(&mut self) {
         // safety cap to avoid infinite loops from buggy AIs
         const MAX_ACTIONS: usize = 256;

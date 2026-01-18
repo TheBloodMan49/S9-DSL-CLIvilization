@@ -197,6 +197,16 @@ pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>], v
         .collect::<Vec<Line>>()
 }
 
+/// Draw the game map to a frame area.
+///
+/// Main entry point for rendering the map in the TUI.
+/// Handles buffer generation, caching, camera positioning, and zoom.
+///
+/// # Arguments
+/// * `frame` - The ratatui Frame to draw on
+/// * `area` - The screen area to render into
+/// * `state` - Current game state (mutable for caching)
+/// * `ui_config` - UI configuration
 pub fn draw_map(frame: &mut Frame, area: Rect, state: &mut GameState, ui_config: &UiConfig) {
     let visible_width = (usize::from(area.width).saturating_sub(2) / usize::from(state.zoom_level)).min(state.map.width);
     let visible_height = (usize::from(area.height * 2).saturating_sub(2) / usize::from(state.zoom_level)).min(state.map.height);

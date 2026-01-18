@@ -8,16 +8,29 @@ use std::thread;
 use crate::game::AiView;
 use crate::game::state::Popup;
 
+/// OpenAI-based AI client for the game.
+///
+/// This struct manages communication with an LLM API (OpenAI-compatible)
+/// to make decisions for AI players in the game.
+///
+/// # Environment Variables
+/// Requires the following environment variables:
+/// - `OPENAI_KEY` or `OPENAI_API_KEY` - API authentication key
+/// - `OPENAI_BASE_URL` or `OPENAI_API_BASE` - API endpoint URL (optional, defaults to OpenAI)
 pub struct AI {
     credentials: Credentials,
     model: &'static str,
     messages: Vec<ChatCompletionMessage>,
 }
 
-/// The AI needs the following tokens in env:
-/// `OPENAI_KEY` &
-/// `OPENAI_BASE_URL`
 impl AI {
+    /// Create a new AI client with the specified model.
+    ///
+    /// # Arguments
+    /// * `model` - The LLM model identifier (e.g., "openai/gpt-4o-mini")
+    ///
+    /// # Returns
+    /// A new AI instance configured with system prompts for the game
     pub fn new(model: &'static str) -> Self {
         // Check if credentials are set
         let has_key = std::env::var("OPENAI_KEY").or_else(|_| std::env::var("OPENAI_API_KEY")).is_ok();
@@ -44,9 +57,10 @@ impl AI {
                 \n- When you're done with your actions, you MUST say 'end' to finish your turn.\
                 \n- I will ask you for one action at a time. After each action succeeds, I'll ask again.\
                 \n- Keep doing actions until you feel ready, then say 'end'.\
+                \n- IMPORTANT: You should say 'end' after 2-4 actions to give your opponent a chance.\
                 \n\nIMPORTANT: Your response must ONLY be the action string, nothing else. Do NOT use JSON, do NOT use code blocks, do NOT add explanations.\
                 \nValid action formats:\
-                \n- 'end' (to end your turn)\
+                \n- 'end' (to end your turn - USE THIS after a few actions)\
                 \n- 'build <building_name>' (e.g., 'build farm')\
                 \n- 'hire <unit_name>' (e.g., 'hire warrior')\
                 \n- 'attack <player_name>' (e.g., 'attack player1')\
@@ -56,7 +70,18 @@ impl AI {
         }
     }
 
-    /// Send a message to the LLM and return the content (if any)
+    /// Send a message to the LLM and return the content (if any).
+    ///
+    /// This method sends a user message to the LLM, waits for a response,
+    /// and returns the text content. The conversation history is maintained
+    /// in the messages vector.
+    ///
+    /// # Arguments
+    /// * `text` - The message to send to the LLM
+    ///
+    /// # Returns
+    /// Some(String) with the LLM's response, or None if the request fails
+    /// or no response is received
     pub async fn send_message(&mut self, text: String) -> Option<String> {
         let message = ChatCompletionMessage {
             role: ChatCompletionMessageRole::User,
@@ -97,19 +122,32 @@ impl AI {
 
 // ===== LLM-backed Ai adapter =====
 
+/// Internal request types for communication with the LLM background thread.
 enum LlmRequest {
     SelectAction(AiView, usize, Sender<Option<String>>),
     SelectPopupInput(AiView, usize, Popup, Sender<String>),
 }
 
-/// LLM-backed Ai that implements the programmatic `Ai` trait by delegating to the async `AI` client
-/// running inside a dedicated background thread (with its own Tokio runtime).
+/// LLM-backed AI implementation that bridges the synchronous Ai trait
+/// to the async OpenAI client.
+///
+/// This struct spawns a background thread with a Tokio runtime to handle
+/// async LLM requests while presenting a synchronous interface.
 pub struct LlmAi {
     tx: Sender<LlmRequest>,
 }
 
 impl LlmAi {
-    /// Clean LLM response by stripping JSON formatting, code blocks, and other noise
+    /// Clean LLM response by stripping JSON formatting, code blocks, and other noise.
+    ///
+    /// The LLM sometimes responds with formatted output like JSON or markdown code blocks,
+    /// even when instructed not to. This function extracts the actual action string.
+    ///
+    /// # Arguments
+    /// * `response` - The raw LLM response text
+    ///
+    /// # Returns
+    /// The cleaned action string
     fn clean_llm_response(response: &str) -> String {
         let mut cleaned = response.trim().to_string();
 
@@ -148,6 +186,17 @@ impl LlmAi {
         cleaned
     }
 
+    /// Create a new LLM-backed AI instance.
+    ///
+    /// This spawns a background thread with a Tokio runtime that processes
+    /// AI requests asynchronously. The thread will run until the LlmAi
+    /// instance is dropped and the channel is closed.
+    ///
+    /// # Arguments
+    /// * `model` - The LLM model identifier (must be a static string)
+    ///
+    /// # Returns
+    /// A new LlmAi instance ready to handle AI requests
     pub fn new(model: &'static str) -> Self {
         let (tx, rx): (Sender<LlmRequest>, Receiver<LlmRequest>) = mpsc::channel();
 
