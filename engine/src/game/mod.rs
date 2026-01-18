@@ -530,6 +530,9 @@ impl Game {
     /// 
     /// The method is safe to call even if the current player is human-controlled;
     /// it will simply return immediately.
+    ///
+    /// Note: The ai_thinking flag should be managed by the caller (e.g., the main loop)
+    /// to ensure UI updates happen before this blocking operation.
     pub fn run_ai_for_current_player(&mut self) {
         // safety cap to avoid infinite loops from buggy AIs
         const MAX_ACTIONS: usize = 256;
@@ -539,22 +542,21 @@ impl Game {
         // Check if current player is AI before starting
         let civ_idx = self.state.player_turn;
         if civ_idx >= self.ais.len() || self.ais[civ_idx].is_none() {
+            self.state.ai_thinking = false;
             return;
         }
         
         if let Some(civ) = self.state.civilizations.get(civ_idx) {
             use crate::ast::PlayerType;
             if !matches!(civ.city.player_type, PlayerType::AI) {
+                self.state.ai_thinking = false;
                 return;
             }
         } else {
+            self.state.ai_thinking = false;
             return;
         }
 
-        // Set AI thinking flag and clear action input
-        self.state.ai_thinking = true;
-        self.state.action_input.clear();
-        self.state.action_editing = false;
 
         loop {
             if actions_done >= MAX_ACTIONS {

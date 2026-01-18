@@ -13,7 +13,8 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, prelude::*};
 use std::io;
-use crate::game::ai::{AI, LlmAi};
+use log::warn;
+use crate::game::ai::LlmAi;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -39,9 +40,9 @@ struct Args {
 async fn main() -> Result<()> {
     // Load .env file (optional)
     if dotenvy::dotenv().is_err() {
-        eprintln!("Warning: No .env file found. Environment variables must be set manually.");
-        eprintln!("Required for AI: OPENAI_KEY or OPENAI_API_KEY");
-        eprintln!("Optional: OPENAI_BASE_URL or OPENAI_API_BASE, AI_MODEL, LOG_LEVEL");
+        warn!("Warning: No .env file found. Environment variables must be set manually.");
+        warn!("Required for AI: OPENAI_KEY or OPENAI_API_KEY");
+        warn!("Optional: OPENAI_BASE_URL or OPENAI_API_BASE, AI_MODEL, LOG_LEVEL");
     }
 
     // Initialize file logger as early as possible so any startup errors are logged
@@ -101,7 +102,7 @@ async fn main() -> Result<()> {
     // If headless, run a simple stdin-driven loop and avoid initializing terminal or crossterm
     if matches.headless {
         log::info!("Starting in headless mode");
-        use crate::game::RandomAi;
+        
         use std::io::{BufRead, BufReader};
 
         let stdin = io::stdin();
@@ -261,11 +262,26 @@ async fn main() -> Result<()> {
 
     // Game loop
     loop {
-        // If current player is AI, run their turn before drawing
-        game.run_ai_for_current_player();
+        // Check if current player is AI and set the flag (but don't run yet)
+        let is_ai_turn = if let Some(civ) = game.state().civilizations.get(game.state().player_turn) {
+            matches!(civ.city.player_type, ast::PlayerType::AI)
+        } else {
+            false
+        };
+        
+        if is_ai_turn {
+            game.state_mut().ai_thinking = true;
+            game.state_mut().action_input.clear();
+            game.state_mut().action_editing = false;
+        }
 
-        // Draw frame
+        // Draw frame (this will show the AI thinking popup if ai_thinking is true)
         game.run(&mut terminal)?;
+
+        // Now run the AI if it's their turn (after the popup has been drawn)
+        if is_ai_turn {
+            game.run_ai_for_current_player();
+        }
 
         // Handle input
         if event::poll(std::time::Duration::from_millis(100))?

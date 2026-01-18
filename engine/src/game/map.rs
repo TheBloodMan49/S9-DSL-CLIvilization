@@ -167,7 +167,7 @@ pub fn apply_cities_on_map_buffer(state: &GameState, buffer: &mut [Vec<Color>]) 
     }
 }
 
-pub fn render_buffer<'a>(state: &GameState, area: Rect, buffer: &[Vec<Color>], visible_width: usize, visible_height: usize) -> Vec<Line<'a>> {
+pub fn render_buffer<'a>(state: &GameState, _area: Rect, buffer: &[Vec<Color>], visible_width: usize, visible_height: usize) -> Vec<Line<'a>> {
     let zoom = state.zoom_level as usize;
 
     let start_x = (state.camera_x as usize).min(state.map.width.saturating_sub(visible_width));

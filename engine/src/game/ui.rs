@@ -170,6 +170,61 @@ fn draw_info_panel(frame: &mut Frame, area: Rect, state: &GameState, ui_config: 
     frame.render_widget(player, areas[1]);
 }
 
+/// Draw a centered popup overlay when the AI is thinking.
+fn draw_ai_thinking_popup(frame: &mut Frame, ui_config: &UiConfig) {
+    let full = frame.area();
+    let w = full.width.saturating_sub(10).min(50);
+    let h = full.height.saturating_sub(8).min(8);
+    let x = full.x + (full.width.saturating_sub(w) / 2);
+    let y = full.y + (full.height.saturating_sub(h) / 2);
+    let popup_area = Rect {
+        x,
+        y,
+        width: w,
+        height: h,
+    };
+
+    // Draw a solid background for the popup
+    let mut bg_lines: Vec<Line> = Vec::new();
+    let width_usize = popup_area.width as usize;
+    for _ in 0..popup_area.height {
+        let text = " ".repeat(width_usize);
+        let span = Span::styled(text, Style::default().bg(Color::Black).fg(Color::White));
+        bg_lines.push(Line::from(vec![span]));
+    }
+    let bg_block = Paragraph::new(bg_lines);
+    frame.render_widget(bg_block, popup_area);
+
+    // Draw the popup content
+    let mut styled_lines: Vec<Line> = Vec::new();
+    styled_lines.push(Line::from(Span::styled(
+        String::new(),
+        Style::default().fg(Color::White).bg(Color::Black),
+    )));
+    styled_lines.push(Line::from(Span::styled(
+        "⏳ AI is thinking...",
+        Style::default().fg(Color::Yellow).bg(Color::Black),
+    )));
+    styled_lines.push(Line::from(Span::styled(
+        String::new(),
+        Style::default().fg(Color::White).bg(Color::Black),
+    )));
+    styled_lines.push(Line::from(Span::styled(
+        "Please wait while the AI makes its move.",
+        Style::default().fg(Color::White).bg(Color::Black),
+    )));
+
+    let popup_widget = Paragraph::new(styled_lines)
+        .block(
+            Block::default()
+                .title("AI Turn")
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(ui_config.color)),
+        )
+        .alignment(ratatui::layout::Alignment::Center);
+    frame.render_widget(popup_widget, popup_area);
+}
+
 fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiConfig) {
     // Show AI thinking message if AI is processing
     let action_text = if state.ai_thinking {
@@ -189,6 +244,11 @@ fn draw_action(frame: &mut Frame, area: Rect, state: &GameState, ui_config: &UiC
             .border_style(Style::default().fg(ui_config.color)),
     );
     frame.render_widget(resources, area);
+
+    // Show AI thinking popup overlay if AI is processing
+    if state.ai_thinking {
+        draw_ai_thinking_popup(frame, ui_config);
+    }
 
     // If a popup is open, render a centered overlay on top of everything
     if let Some(popup) = &state.popup {
