@@ -125,6 +125,7 @@ fn generate_tagged_enums(source_file: &mut BufWriter<File>, content: &str) {
     }
 }
 
+/// Generate Rust structs from TypeScript interfaces. Maps optional properties (?) to Option<T> for null safety.
 fn generate_nodes(source_file: &mut BufWriter<File>, content: &str) {
     let node_regex = Regex::new(NODE_REGEX).expect("failed to compile regex pattern");
     let property_regex = Regex::new(PROPERTY_REGEX).expect("failed to compile regex pattern");
