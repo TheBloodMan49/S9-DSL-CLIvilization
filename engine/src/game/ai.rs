@@ -24,7 +24,7 @@ pub struct AI {
 }
 
 impl AI {
-    /// Create a new AI client with the specified model.
+    /// Create AI with model and system prompt. Checks env vars at construction, warning if credentials missing.
     ///
     /// # Arguments
     /// * `model` - The LLM model identifier (e.g., "openai/gpt-4o-mini")
@@ -70,11 +70,7 @@ impl AI {
         }
     }
 
-    /// Send a message to the LLM and return the content (if any).
-    ///
-    /// This method sends a user message to the LLM, waits for a response,
-    /// and returns the text content. The conversation history is maintained
-    /// in the messages vector.
+    /// Send message to LLM async. Maintains conversation history for context. Returns None on failure with detailed logging.
     ///
     /// # Arguments
     /// * `text` - The message to send to the LLM
@@ -122,32 +118,21 @@ impl AI {
 
 // ===== LLM-backed Ai adapter =====
 
-/// Internal request types for communication with the LLM background thread.
+/// Internal request types for thread communication. Enum ensures type-safe message passing between sync and async worlds.
 enum LlmRequest {
     SelectAction(AiView, usize, Sender<Option<String>>),
     SelectPopupInput(AiView, usize, Popup, Sender<String>),
 }
 
-/// LLM-backed AI implementation that bridges the synchronous Ai trait
-/// to the async OpenAI client.
-///
-/// This struct spawns a background thread with a Tokio runtime to handle
-/// async LLM requests while presenting a synchronous interface.
+/// Thread-based async adapter bridging sync Ai trait to async OpenAI client. Background Tokio runtime handles async calls
+/// while exposing synchronous interface. Spawns dedicated thread avoiding executor conflicts.
 pub struct LlmAi {
     tx: Sender<LlmRequest>,
 }
 
 impl LlmAi {
-    /// Clean LLM response by stripping JSON formatting, code blocks, and other noise.
-    ///
-    /// The LLM sometimes responds with formatted output like JSON or markdown code blocks,
-    /// even when instructed not to. This function extracts the actual action string.
-    ///
-    /// # Arguments
-    /// * `response` - The raw LLM response text
-    ///
-    /// # Returns
-    /// The cleaned action string
+    /// Clean LLM response by stripping JSON/markdown artifacts. Handles common formatting errors from non-compliant models.
+    /// Simple string parsing avoids heavyweight JSON parser overhead for this use case.
     fn clean_llm_response(response: &str) -> String {
         let mut cleaned = response.trim().to_string();
 

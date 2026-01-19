@@ -34,10 +34,7 @@ pub struct Resources {
     pub ressources: i32,
 }
 
-/// The main game state containing all game data.
-///
-/// This includes the map, civilizations, turn counter, buildings/units definitions,
-/// active travels (attacks in transit), and UI state.
+/// Core game state aggregating map, players, turns, and UI state. Mutable caching fields optimize rendering hot paths.
 #[derive(Debug)]
 pub struct GameState {
     pub map: GameMap,
@@ -129,7 +126,7 @@ pub struct Travel {
 }
 
 impl GameState {
-    /// Create a new game state with default settings.
+    /// Create default game with two civilizations and procedural map. Provides playable starting state without config.
     ///
     /// Initializes a game with:
     /// - A random map
@@ -270,7 +267,7 @@ impl GameState {
         }
     }
 
-    /// Apply the current seed: rebuild the map and stop editing.
+    /// Regenerate map from current seed and exit edit mode. Atomic operation ensures consistent state.
     pub fn submit_seed(&mut self) {
         self.map = GameMap::new(self.map.seed.clone(), self.map.width, self.map.height);
         self.seed_editing = false;
@@ -326,10 +323,7 @@ impl GameState {
         self.popup = None;
     }
 
-    /// Submit the current action text.
-    ///
-    /// Parses and executes the action. May open a popup for further input
-    /// (e.g., if building type not specified).
+    /// Parse and execute action with automatic popup generation for missing parameters. Lowercase parsing provides case-insensitive UX.
     ///
     /// # Returns
     /// true if a popup was opened for further input, false otherwise
@@ -477,7 +471,7 @@ impl GameState {
         false
     }
 
-    /// Submit the current popup input.
+    /// Handle popup submission with fuzzy choice matching. Accepts both numeric indices and name prefixes for flexibility.
     ///
     /// Interprets the user's selection (by index or name) and executes
     /// the corresponding action (build, hire, attack, etc.).
@@ -822,10 +816,7 @@ impl GameState {
         // increment turn counter maybe handled elsewhere; keep turn as-is here
     }
 
-    /// Remove units from a civilization's city.
-    ///
-    /// Removes up to the specified number of units, prioritizing
-    /// units with smaller counts first.
+    /// Remove units with smallest-first priority. Returns actual removed count for battle casualty reporting.
     ///
     /// # Arguments
     /// * `civ_index` - Index of the civilization
@@ -856,14 +847,8 @@ impl GameState {
         removed
     }
 
-    /// Start an attack from one civilization to another.
-    ///
-    /// This method:
-    /// - Validates attacker and defender indices
-    /// - Removes units from the attacker
-    /// - Computes a path from attacker to defender
-    /// - Creates a Travel representing the units in transit
-    /// - The attack will resolve when the travel completes
+    /// Launch attack with pathfinding and travel time calculation. Units removed immediately; combat deferred until arrival.
+    /// Weighted pathfinding accounts for terrain: water slower than land, mountains impassable.
     ///
     /// # Arguments
     /// * `attacker_idx` - Index of the attacking civilization

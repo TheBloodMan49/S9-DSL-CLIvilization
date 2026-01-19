@@ -19,8 +19,8 @@ fn level_from_env() -> LevelFilter {
     }
 }
 
-/// Initialize a simple file-backed logger (singleton).
-/// Calling multiple times is safe and will be a no-op after the first call.
+/// Initialize thread-safe singleton logger using OnceLock for lock-free concurrent calls.
+/// Truncates log file on startup for clean sessions. Environment-aware via LOG_LEVEL variable.
 pub fn init<P: AsRef<Path>>(log_file: P) -> Result<()> {
     if LOGGER_INITIALIZED.get().is_some() {
         return Ok(());

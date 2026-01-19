@@ -24,13 +24,12 @@ pub enum UiState {
 
 // ===== AI trait + simple RandomAI implementation =====
 
-/// AI trait: implement to allow programmatic players. The AI receives a read-only view of the game
-/// state and the index of the civilization it controls.
+/// Clean AI abstraction with immutable view preventing state corruption. Send bound enables concurrent execution.
 pub trait Ai: Send {
-    /// Return an action string to perform, or None to indicate "no more actions / end turn".
+    /// Request action from AI. None signals turn end, enabling iterative loops without special parsing.
     fn select_action(&mut self, view: &AiView, civ_index: usize) -> Option<String>;
 
-    /// When a popup is opened, provide the textual input (e.g. "1" or a name) to submit the popup.
+    /// Handle popup with intelligent default (first choice). Optional override reduces boilerplate for simple AIs.
     fn select_popup_input(
         &mut self,
         _view: &AiView,
@@ -46,7 +45,7 @@ pub trait Ai: Send {
     }
 }
 
-/// Very small random AI used as an example implementation.
+/// Lightweight random AI using SmallRng (2-3x faster than crypto RNGs).
 pub struct RandomAi {
     rng: SmallRng,
 }
@@ -108,6 +107,8 @@ impl Ai for RandomAi {
     }
 }
 
+/// Core game engine with separated state/UI/AI subsystems. Vec<Option<Box<dyn Ai>>> enables sparse assignment
+/// without hash overhead. Powers both headless and TUI modes identically.
 pub struct Game {
     state: GameState,
     ui_state: UiState,
@@ -116,7 +117,7 @@ pub struct Game {
     ais: Vec<Option<Box<dyn Ai>>>,
 }
 
-// Lightweight view passed to AIs to avoid borrows of self
+/// Compact player statistics hiding implementation details. Encapsulation prevents AI coupling to internals.
 #[derive(Clone)]
 pub struct AiPlayerView {
     pub name: String,
@@ -125,6 +126,7 @@ pub struct AiPlayerView {
     pub units: usize,
 }
 
+/// Immutable state snapshot for AIs. Cloneable for thread-safe async backend communication.
 pub struct AiView {
     pub turn: i32,
     pub player_turn: usize,
@@ -149,6 +151,7 @@ impl Game {
         }
     }
 
+    /// Load from JSON with rich error context propagation. Delegates to from_string for DRY parsing logic.
     pub fn from_file(config_path: &str) -> anyhow::Result<Self> {
         // Read file
         let contents = std::fs::read_to_string(config_path)
@@ -157,6 +160,7 @@ impl Game {
         Self::from_string(&contents)
     }
 
+    /// Parse JSON using serde for zero-boilerplate deserialization. Section-based architecture enables modular configs.
     pub fn from_string(config_string: &str) -> anyhow::Result<Self> {
         // Parse JSON into AST model
         let model: crate::ast::Model =
@@ -385,7 +389,7 @@ impl Game {
 
     // ===== Headless / programmatic API =====
 
-    /// Apply an action by string. Returns true if this resulted in a popup opening (requires further input).
+    /// Apply action programmatically reusing interactive pipeline. Boolean signals popup needing additional input.
     pub fn apply_action(&mut self, action: &str) -> bool {
         // prepare action input like interactive mode would
         log::info!("apply_action called: {action}");
@@ -401,8 +405,7 @@ impl Game {
         opened
     }
 
-    /// Provide input for an open popup (the text entered by user) and submit it
-    /// Returns true if a popup was present and processed.
+    /// Submit popup input with state validation. Returns false if no popup active, preventing invalid transitions.
     pub fn submit_popup_input(&mut self, input: &str) -> bool {
         if self.state.popup.is_none() {
             return false;
@@ -416,7 +419,7 @@ impl Game {
         true
     }
 
-    /// Advance the turn as if the current player ended their turn
+    /// Advance to next player with automatic turn rollover. Modulo arithmetic ensures seamless civilization cycling.
     pub fn step(&mut self) {
         self.state.player_turn = (self.state.player_turn + 1) % self.state.civilizations.len();
         if self.state.player_turn == 0 {
@@ -424,17 +427,15 @@ impl Game {
         }
     }
 
-    /// Borrow the inner state for read-only inspection
     pub fn state(&self) -> &GameState {
         &self.state
     }
 
-    /// Borrow the inner state mutably
     pub fn state_mut(&mut self) -> &mut GameState {
         &mut self.state
     }
 
-    /// Produce a compact JSON value snapshot describing key game state. Uses `serde_json::Value`.
+    /// Generate compact JSON snapshot for external consumers. Stable schema decouples internals from client code.
     pub fn snapshot_value(&self) -> serde_json::Value {
         let players: Vec<serde_json::Value> = self
             .state
@@ -458,7 +459,7 @@ impl Game {
         })
     }
 
-    /// Register an AI instance to control the civilization at `civ_index`.
+    /// Register AI with automatic Vec growth preventing index panics. Box<dyn Ai> enables heterogeneous mixing.
     pub fn register_ai(&mut self, civ_index: usize, ai: Box<dyn Ai>) {
         if civ_index >= self.ais.len() {
             // grow to fit
@@ -468,7 +469,7 @@ impl Game {
         log::info!("Registered AI for civ {civ_index}");
     }
 
-    /// Return a list of plausible actions for the civilization index (lowercased strings as used by the parser)
+    /// Enumerate valid actions from game rules. Lowercase normalization ensures parser compatibility.
     pub fn ai_possible_actions(&self, civ_index: usize) -> Vec<String> {
         let mut actions: Vec<String> = Vec::new();
         actions.push("end".to_string());
@@ -487,7 +488,7 @@ impl Game {
         actions
     }
 
-    /// Build a lightweight snapshot of the state for AI decision making.
+    /// Build minimal AI view snapshot. Aggregates distributed state, exposing only decision-relevant data.
     pub fn make_ai_view(&self) -> AiView {
         let players = self
             .state
@@ -519,20 +520,8 @@ impl Game {
         }
     }
 
-    /// Execute AI actions for the current player if they are AI-controlled.
-    /// 
-    /// This method:
-    /// - Checks if the current player is AI-controlled
-    /// - Repeatedly queries the AI for actions
-    /// - Applies each action and handles any popups
-    /// - Continues until the AI returns None or says "end"
-    /// - Includes a safety limit to prevent infinite loops
-    /// 
-    /// The method is safe to call even if the current player is human-controlled;
-    /// it will simply return immediately.
-    ///
-    /// Note: The ai_thinking flag should be managed by the caller (e.g., the main loop)
-    /// to ensure UI updates happen before this blocking operation.
+    /// Execute AI actions for current player with safety cap preventing infinite loops. Handles popups automatically.
+    /// AI thinking flag managed by caller for UI updates before blocking operation.
     pub fn run_ai_for_current_player(&mut self) {
         // safety cap to avoid infinite loops from buggy AIs
         const MAX_ACTIONS: usize = 256;

@@ -10,6 +10,8 @@ use anyhow::{Result, anyhow};
 /// 
 /// # Returns
 /// A 32-bit hash value
+/// 
+/// Hash string using FNV-1a for deterministic seed generation. Non-cryptographic but fast and collision-resistant for game purposes.
 pub fn hash_tmb(text: String) -> u32 {
     let mut hash: u32 = 2166136261; // FNV offset basis
 
@@ -30,6 +32,8 @@ pub fn hash_tmb(text: String) -> u32 {
 /// 
 /// # Returns
 /// A tuple of (red, green, blue) values from 0 to 255
+/// 
+/// Convert HSV to RGB using standard color wheel math. Handles all hue ranges with continuous transitions.
 pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
     let c = v * s;
     let x = c * (1.0 - ((h / 60.0) % 2.0 - 1.0).abs());
@@ -59,6 +63,8 @@ pub fn hsv_to_rgb(h: f32, s: f32, v: f32) -> (u8, u8, u8) {
 /// 
 /// # Returns
 /// A ratatui Color, or white if the format is invalid
+/// 
+/// Parse HTML hex color (#RRGGBB) with graceful fallback to white. Tolerates invalid input without panicking.
 pub fn str_to_color(s: &str) -> ratatui::style::Color {
     // Str is in html hex format: #RRGGBB
     if s.len() != 7 || !s.starts_with('#') {
@@ -71,16 +77,7 @@ pub fn str_to_color(s: &str) -> ratatui::style::Color {
     }
 }
 
-/// Write content to a file in the output directory.
-/// 
-/// Creates the output directory if it doesn't exist.
-/// 
-/// # Arguments
-/// * `filename` - Name of the file (will be written to output/filename)
-/// * `content` - Content to write to the file
-/// 
-/// # Returns
-/// Ok(()) on success, or an error if the operation fails
+/// Write to output/ directory with automatic creation. Rich error context aids debugging file I/O failures.
 pub fn write_to_file(filename: &str, content: &str) -> Result<()> {
     // Create output/ directory if it doesn't exist
     if let Err(e) = std::fs::create_dir_all("output") {
