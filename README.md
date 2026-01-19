@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**CLIvilization** is a complete domain-specific language (DSL) and game engine for building turn-based strategy games inspired by Civilization. The project enables game designers to declaratively define game configurations (including cities, buildings, units, victory conditions, and game rules) through a configuration file, which is then compiled into an interactive terminal-based game.
+**CLIvilization** is a complete domain-specific language (DSL) and game engine for building turn-based strategy games inspired by the Civilization series. The project enables game designers to declaratively define game configurations (including cities, buildings, units, victory conditions, and game rules) through a configuration file, which is then compiled into an interactive terminal-based game.
 
 ![Exemple 1](images/exemple1.png)
 
