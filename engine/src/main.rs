@@ -62,7 +62,6 @@ async fn main() -> Result<()> {
         } else {
             "unknown location".to_string()
         };
-        let _ = std::panic::take_hook();
         log::error!("PANIC at {location}: {payload}");
     }));
 
