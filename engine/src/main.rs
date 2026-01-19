@@ -109,6 +109,7 @@ async fn main() -> Result<()> {
 
         // Register AIs for headless mode
         // First collect indices to avoid borrowing `game` immutably while mutating it
+        let ai_type = std::env::var("AI_TYPE").unwrap_or_else(|_| "llm".to_string());
         let ai_model = std::env::var("AI_MODEL").unwrap_or_else(|_| "openai/gpt-4o-mini".to_string());
         let mut ai_indices: Vec<usize> = Vec::new();
         for (i, civ) in game.state().civilizations.iter().enumerate() {
@@ -117,8 +118,16 @@ async fn main() -> Result<()> {
             }
         }
         for i in ai_indices {
-            game.register_ai(i, Box::new(LlmAi::new(Box::leak(ai_model.clone().into_boxed_str()))));
-            log::info!("Registered AI for civ {} (headless) with model {}", i, ai_model);
+            match ai_type.to_lowercase().as_str() {
+                "random" => {
+                    game.register_ai(i, Box::new(game::RandomAi::new()));
+                    log::info!("Registered RandomAi for civ {} (headless)", i);
+                }
+                "llm" | _ => {
+                    game.register_ai(i, Box::new(LlmAi::new(Box::leak(ai_model.clone().into_boxed_str()))));
+                    log::info!("Registered LlmAi for civ {} (headless) with model {}", i, ai_model);
+                }
+            }
         }
 
         // Emit initial snapshot
@@ -246,6 +255,7 @@ async fn main() -> Result<()> {
     // Register AIs for UI mode as well so the UI can auto-play AI turns
     if !matches.headless {
         use crate::game::ai::LlmAi;
+        let ai_type = std::env::var("AI_TYPE").unwrap_or_else(|_| "llm".to_string());
         let ai_model = std::env::var("AI_MODEL").unwrap_or_else(|_| "openai/gpt-4o-mini".to_string());
         let mut ai_indices: Vec<usize> = Vec::new();
         for (i, civ) in game.state().civilizations.iter().enumerate() {
@@ -254,8 +264,16 @@ async fn main() -> Result<()> {
             }
         }
         for i in ai_indices {
-            game.register_ai(i, Box::new(LlmAi::new(Box::leak(ai_model.clone().into_boxed_str()))));
-            log::info!("Registered LlmAi for civ {} (UI) with model {}", i, ai_model);
+            match ai_type.to_lowercase().as_str() {
+                "random" => {
+                    game.register_ai(i, Box::new(game::RandomAi::new()));
+                    log::info!("Registered RandomAi for civ {} (UI)", i);
+                }
+                "llm" | _ => {
+                    game.register_ai(i, Box::new(LlmAi::new(Box::leak(ai_model.clone().into_boxed_str()))));
+                    log::info!("Registered LlmAi for civ {} (UI) with model {}", i, ai_model);
+                }
+            }
         }
     }
 
